@@ -29,6 +29,8 @@ public abstract class AbstractAircraft extends AbstractFlyingObject {
         if(hp <= 0){
             hp=0;
             vanish();
+        } else if(hp >= maxHp){
+            hp = maxHp;
         }
     }
 
