@@ -54,13 +54,18 @@ class MobEnemy {
 }
 AbstractAircraft <|-- MobEnemy
 
-class SuperEnemy {
-    - shootNum:int
-    + SuperEnemy(int locationX, int locationY, int speedX, int speedY, int hp)
+class EliteEnemy {
+    - power:int
+    - direction:int
+    - shootInterval:int
+    - shootTimer:int
+    - random:Random
+    + EliteEnemy(int locationX, int locationY, int speedX, int speedY, int hp)
     + forward():void
     + shoot():List<BaseBullet>
+    + dropProps():List<AbstractProp>
 }
-AbstractAircraft <|-- SuperEnemy
+AbstractAircraft <|-- EliteEnemy
 
 abstract class BaseBullet
 {
@@ -83,7 +88,32 @@ class EnemyBullet {
 BaseBullet <|-- HeroBullet
 BaseBullet <|-- EnemyBullet
 
+abstract class AbstractProp {
+    + AbstractProp(int locationX, int locationY, int speedX, int speedY)
+    + forward():void
+    + {abstract} effect(HeroAircraft heroAircraft):void
+}
+
+class BloodProp {
+    + BloodProp(int locationX, int locationY, int speedX, int speedY)
+    + effect(HeroAircraft heroAircraft):void
+}
+AbstractProp <|-- BloodProp
+
+class BombProp {
+    + BombProp(int locationX, int locationY, int speedX, int speedY)
+    + effect(HeroAircraft heroAircraft):void
+}
+AbstractProp <|-- BombProp
+
+class FireProp {
+    + FireProp(int locationX, int locationY, int speedX, int speedY)
+    + effect(HeroAircraft heroAircraft):void
+}
+AbstractProp <|-- FireProp
+
 AbstractFlyingObject <|-- AbstractAircraft
 AbstractFlyingObject <|-- BaseBullet
+AbstractFlyingObject <|-- AbstractProp
 
 @enduml

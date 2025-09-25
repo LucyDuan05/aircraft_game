@@ -19,15 +19,15 @@ import java.util.Random;
  */
 public class EliteEnemy extends AbstractAircraft {
 
-    private int shootNum = 1;
+//    private int shootNum = 1;
     private int power = 10;
     private int direction = 1; // 精英机子弹向下飞行
 
     // 射击和生成敌机的周期计时器
     private int shootInterval = 600; // 射击周期，毫秒
-    private int spawnInterval = 10000; // 生成敌机周期，毫秒
+    // private int spawnInterval = 10000; // 生成敌机周期，毫秒
     private int shootTimer = 0;
-    private int spawnTimer = 0;
+    // private int spawnTimer = 0;
     private Random random = new Random();
 
     public EliteEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
@@ -38,8 +38,8 @@ public class EliteEnemy extends AbstractAircraft {
     public void forward() {
         super.forward();
         // 更新计时器
-        shootTimer += 20; // 假设每20ms调用一次forward
-        spawnTimer += 20;
+        shootTimer += 40;
+        // spawnTimer += 40;
     }
 
     @Override
@@ -61,22 +61,18 @@ public class EliteEnemy extends AbstractAircraft {
      * 新增方法：周期性产生敌机
      * 返回新产生的敌机列表
      */
-    public List<AbstractAircraft> spawnEnemies() {
-        List<AbstractAircraft> res = new LinkedList<>();
-        if (spawnTimer >= spawnInterval) {
-            spawnTimer = 0; // 重置计时器
-            if (random.nextDouble() < 0.5) { // 50%概率生成普通敌机
-                res.add(new MobEnemy(
-                        (int) (Math.random() * (Main.WINDOW_WIDTH - 50)),
-                        0, 0, 10, 30));
-            } else { // 50%概率生成精英敌机
-                res.add(new EliteEnemy(
-                        (int) (Math.random() * (Main.WINDOW_WIDTH - 50)),
-                        0, 0, 10, 60));
-            }
-        }
-        return res;
-    }
+//    public List<AbstractAircraft> spawnEnemies() {
+//        List<AbstractAircraft> res = new LinkedList<>();
+//        if (spawnTimer >= spawnInterval) {
+//            spawnTimer = 0; // 重置计时器
+//            if (random.nextDouble() < 0.5) {
+//                res.add(new MobEnemy(
+//                        (int) (Math.random() * (Main.WINDOW_WIDTH - 50)),
+//                        0, 0, 10, 30));
+//            }
+//        }
+//        return res;
+//    }
 
     /**
      * 重写 vanish 方法，实现坠毁后掉落道具

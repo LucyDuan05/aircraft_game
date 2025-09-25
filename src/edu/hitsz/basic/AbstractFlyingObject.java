@@ -81,6 +81,10 @@ public abstract class AbstractFlyingObject {
             // 横向超出边界后反向
             speedX = -speedX;
         }
+        if (locationY >= Main.WINDOW_HEIGHT) {
+            // 如果飞出屏幕底部，则标记为无效
+            vanish();
+        }
     }
 
     /**
