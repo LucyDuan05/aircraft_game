@@ -2,11 +2,6 @@ package edu.hitsz.aircraft;
 
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.bullet.EnemyBullet;
-import edu.hitsz.prop.AbstractProp;
-import edu.hitsz.prop.BloodProp;
-import edu.hitsz.prop.BombProp;
-import edu.hitsz.prop.FireProp;
-import edu.hitsz.application.Main;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -78,20 +73,20 @@ public class EliteEnemy extends AbstractAircraft {
      * 重写 vanish 方法，实现坠毁后掉落道具
      * 返回可能产生的道具列表
      */
-    public List<AbstractProp> dropProps() {
-        List<AbstractProp> props = new LinkedList<>();
-        // 33%概率掉落道具
-        if (random.nextDouble() < 0.33) {
-            // 随机选择道具类型
-            double propType = random.nextDouble();
-            if (propType < 0.33) {
-                props.add(new BloodProp(this.getLocationX(), this.getLocationY(), 0, 5));
-            } else if (propType < 0.66) {
-                props.add(new FireProp(this.getLocationX(), this.getLocationY(), 0, 5));
-            } else {
-                props.add(new BombProp(this.getLocationX(), this.getLocationY(), 0, 5));
-            }
-        }
-        return props;
-    }
+//    public List<AbstractProp> dropProps() {
+//        List<AbstractProp> props = new LinkedList<>();
+//        // 33%概率掉落道具
+//        if (random.nextDouble() < 0.9) {
+//            // 随机选择道具类型
+//            double propType = random.nextDouble();
+//            if (propType < 0.3) {
+//                props.add(new BloodProp(this.getLocationX(), this.getLocationY(), 0, 5));
+//            } else if (propType < 0.6) {
+//                props.add(new FireProp(this.getLocationX(), this.getLocationY(), 0, 5));
+//            } else {
+//                props.add(new BombProp(this.getLocationX(), this.getLocationY(), 0, 5));
+//            }
+//        }
+//        return props;
+//    }
 }

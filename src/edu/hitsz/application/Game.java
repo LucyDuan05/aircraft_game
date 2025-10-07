@@ -4,6 +4,7 @@ import edu.hitsz.aircraft.*;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.prop.AbstractProp;
+import edu.hitsz.prop.RandomPropSpawner;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
 import javax.swing.*;
@@ -32,11 +33,19 @@ public class Game extends JPanel {
      */
     private int timeInterval = 40;
 
+    // 工厂模式实例
+    private final RandomEnemySpawner aircraftSpawner = new RandomEnemySpawner();
+    private final RandomPropSpawner propSpawner = new RandomPropSpawner();
+
+    // 单例模式实例
     private final HeroAircraft heroAircraft;
+
+    // 游戏列表
     private final List<AbstractAircraft> enemyAircrafts;
     private final List<BaseBullet> heroBullets;
     private final List<BaseBullet> enemyBullets;
     private final List<AbstractProp> props;
+
     /**
      * 屏幕中出现的敌机最大数量
      */
@@ -58,28 +67,27 @@ public class Game extends JPanel {
     private int cycleDuration = 600;
     private int cycleTime = 0;
 
-    private final Random random = new Random(); // <-- 新增：随机数生成器
+    private final Random random = new Random();
 
     /**
      * 游戏结束标志
      */
     private boolean gameOverFlag = false;
 
+    // 构造函数不再接受列表参数
     public Game() {
-        heroAircraft = new HeroAircraft(
-                Main.WINDOW_WIDTH / 2,
-                Main.WINDOW_HEIGHT - ImageManager.HERO_IMAGE.getHeight() ,
-                0, 0, 100);
 
-        enemyAircrafts = new LinkedList<>();
-        heroBullets = new LinkedList<>();
-        enemyBullets = new LinkedList<>();
-        props = new LinkedList<>();
+        // **修正：初始化列表成员变量**
+        this.enemyAircrafts = new LinkedList<>();
+        this.heroBullets = new LinkedList<>();
+        this.enemyBullets = new LinkedList<>();
+        this.props = new LinkedList<>();
+
+        // 单例模式 & 无参数方法
+        this.heroAircraft = HeroAircraft.getInstance();
 
         /**
-         * Scheduled 线程池，用于定时任务调度
-         * 关于alibaba code guide：可命名的 ThreadFactory 一般需要第三方包
-         * apache 第三方库： org.apache.commons.lang3.concurrent.BasicThreadFactory
+         * Scheduled 线程池，用于定时任务调度...
          */
         this.executorService = new ScheduledThreadPoolExecutor(1,
                 new BasicThreadFactory.Builder().namingPattern("game-action-%d").daemon(true).build());
@@ -94,8 +102,7 @@ public class Game extends JPanel {
      */
     public void action() {
 
-        int eliteEnemyWidth = ImageManager.ELITE_ENEMY_IMAGE.getWidth();
-        int mobEnemyWidth = ImageManager.MOB_ENEMY_IMAGE.getWidth();
+        // **修正：删除多余的图片宽度变量 (已移至工厂)**
 
         // 定时任务：绘制、对象产生、碰撞判定、击毁及结束判定
         Runnable task = () -> {
@@ -106,33 +113,9 @@ public class Game extends JPanel {
             if (timeCountAndNewCycleJudge()) {
                 System.out.println(time);
 
-                // **【修改】新敌机随机产生**
+                // **修正：新敌机随机产生 (使用工厂模式)**
                 if (enemyAircrafts.size() < enemyMaxNumber) {
-
-                    // 随机决定生成精英机还是普通机 (例如：30% 精英机, 70% 普通机)
-                    if (random.nextDouble() < 0.3) {
-                        // 生成精英机 (EliteEnemy)
-                        int minX = eliteEnemyWidth / 2;
-                        int maxX = Main.WINDOW_WIDTH - eliteEnemyWidth / 2;
-                        int randomX = random.nextInt(maxX - minX) + minX; // 生成在 minX 到 maxX 之间
-                        enemyAircrafts.add(new EliteEnemy(
-                                randomX,
-                                (int) (random.nextDouble() * Main.WINDOW_HEIGHT * 0.05),
-                                0, 10, 60
-                        ));
-                    } else {
-                        // 生成普通机 (MobEnemy)
-                        int minX = mobEnemyWidth / 2;
-                        int maxX = Main.WINDOW_WIDTH - mobEnemyWidth / 2;
-                        int randomX = random.nextInt(maxX - minX) + minX;
-                        enemyAircrafts.add(new MobEnemy(
-                                randomX,
-                                (int) (random.nextDouble() * Main.WINDOW_HEIGHT * 0.05),
-                                0,
-                                10,
-                                30
-                        ));
-                    }
+                    enemyAircrafts.add(aircraftSpawner.spawnEnemy());
                 }
 
                 // 飞机射出子弹
@@ -169,7 +152,6 @@ public class Game extends JPanel {
 
         /**
          * 以固定延迟时间进行执行
-         * 本次任务执行完成后，需要延迟设定的延迟时间，才会执行新的任务
          */
         executorService.scheduleWithFixedDelay(task, timeInterval, timeInterval, TimeUnit.MILLISECONDS);
 
@@ -198,7 +180,7 @@ public class Game extends JPanel {
                 enemyBullets.addAll(((EliteEnemy) enemyAircraft).shoot());
             }
         }
-        // 英雄射击
+        // 英雄射击 (使用成员变量的shoot方法)
         heroBullets.addAll(heroAircraft.shoot());
     }
 
@@ -212,6 +194,7 @@ public class Game extends JPanel {
     }
 
     private void aircraftsMoveAction() {
+        // **修正：移除 EliteEnemy 的生成逻辑（已移至工厂）**
         for (AbstractAircraft enemyAircraft : enemyAircrafts) {
             enemyAircraft.forward();
         }
@@ -248,20 +231,23 @@ public class Game extends JPanel {
             for (AbstractAircraft enemyAircraft : enemyAircrafts) {
                 if (enemyAircraft.notValid()) {
                     // 已被其他子弹击毁的敌机，不再检测
-                    // 避免多个子弹重复击毁同一敌机的判定
                     continue;
                 }
                 if (enemyAircraft.crash(bullet)) {
                     // 敌机撞击到英雄机子弹
-                    // 敌机损失一定生命值
                     enemyAircraft.decreaseHp(bullet.getPower());
                     bullet.vanish();
                     if (enemyAircraft.notValid()) {
                         // 获得分数，产生道具补给
                         score += 10;
                         if (enemyAircraft instanceof EliteEnemy) {
-                            List<AbstractProp> droppedProps = ((EliteEnemy) enemyAircraft).dropProps();
-                            props.addAll(droppedProps);
+                            // **修正：使用道具工厂生成道具**
+                            AbstractProp droppedProp = propSpawner.spawnProp(
+                                    enemyAircraft.getLocationX(),
+                                    enemyAircraft.getLocationY()
+                            );
+                            props.add(droppedProp);
+                            // 确保 EliteEnemy 内部的 dropProps() 已被移除或返回空列表
                         }
                     }
                 }
@@ -292,8 +278,6 @@ public class Game extends JPanel {
      * 1. 删除无效的子弹
      * 2. 删除无效的敌机
      * 3. 删除无效的道具
-     * <p>
-     * 无效的原因可能是撞击或者飞出边界
      */
     private void postProcessAction() {
         enemyBullets.removeIf(AbstractFlyingObject::notValid);
@@ -326,7 +310,6 @@ public class Game extends JPanel {
         }
 
         // 先绘制子弹，后绘制飞机
-        // 这样子弹显示在飞机的下层
         paintImageWithPositionRevised(g, enemyBullets);
         paintImageWithPositionRevised(g, heroBullets);
 
