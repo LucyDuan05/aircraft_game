@@ -51,42 +51,4 @@ public class EliteEnemy extends AbstractAircraft {
         }
         return res;
     }
-
-    /**
-     * 新增方法：周期性产生敌机
-     * 返回新产生的敌机列表
-     */
-//    public List<AbstractAircraft> spawnEnemies() {
-//        List<AbstractAircraft> res = new LinkedList<>();
-//        if (spawnTimer >= spawnInterval) {
-//            spawnTimer = 0; // 重置计时器
-//            if (random.nextDouble() < 0.5) {
-//                res.add(new MobEnemy(
-//                        (int) (Math.random() * (Main.WINDOW_WIDTH - 50)),
-//                        0, 0, 10, 30));
-//            }
-//        }
-//        return res;
-//    }
-
-    /**
-     * 重写 vanish 方法，实现坠毁后掉落道具
-     * 返回可能产生的道具列表
-     */
-//    public List<AbstractProp> dropProps() {
-//        List<AbstractProp> props = new LinkedList<>();
-//        // 33%概率掉落道具
-//        if (random.nextDouble() < 0.9) {
-//            // 随机选择道具类型
-//            double propType = random.nextDouble();
-//            if (propType < 0.3) {
-//                props.add(new BloodProp(this.getLocationX(), this.getLocationY(), 0, 5));
-//            } else if (propType < 0.6) {
-//                props.add(new FireProp(this.getLocationX(), this.getLocationY(), 0, 5));
-//            } else {
-//                props.add(new BombProp(this.getLocationX(), this.getLocationY(), 0, 5));
-//            }
-//        }
-//        return props;
-//    }
 }

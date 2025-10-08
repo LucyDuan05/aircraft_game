@@ -66,10 +66,12 @@ public class Game extends JPanel {
      * 周期（ms)
      * 指示子弹的发射、敌机的产生频率
      */
-    private int cycleDuration = 600;
+    private int spawnDuration = 1040;
+    private int shootDuration = 280;
     private int cycleTime = 0;
 
-    private int bossScoreThreshold = 500;   // Boss 出现的分数阈值
+    private int bossScoreThreshold = 300;   // Boss 出现的分数阈值
+    private final int bossadd = 200;
     private int bossSpawnCount = 0;         // 记录 Boss 出现次数
 
     private final Random random = new Random();
@@ -82,7 +84,7 @@ public class Game extends JPanel {
     // 构造函数不再接受列表参数
     public Game() {
 
-        // **修正：初始化列表成员变量**
+        // 初始化列表成员变量
         this.enemyAircrafts = new LinkedList<>();
         this.heroBullets = new LinkedList<>();
         this.enemyBullets = new LinkedList<>();
@@ -114,17 +116,36 @@ public class Game extends JPanel {
 
             time += timeInterval;
 
-            // 周期性执行（控制频率）
-            if (timeCountAndNewCycleJudge()) {
+            // 1. 射击周期判断
+            if (time % shootDuration == 0) { // 使用模运算判断是否到达射击周期
+                // 飞机射出子弹
+                shootAction();
+            }
+
+            // 2. 敌机生成周期判断
+            if (time % spawnDuration == 0) {
                 System.out.println(time);
 
-                // 修正：新敌机随机产生 (使用工厂模式)
+                // 新敌机随机产生 (使用工厂模式)
                 if (enemyAircrafts.size() < enemyMaxNumber) {
                     enemyAircrafts.add(aircraftSpawner.spawnEnemy());
                 }
 
-                // 飞机射出子弹
-                shootAction();
+                // Boss 出现逻辑
+                boolean hasBoss = enemyAircrafts.stream().anyMatch(e -> e instanceof BossEnemy);
+                if (!hasBoss && score >= bossScoreThreshold) { // 分数达到设定阈值
+                    // 没有Boss 且达到下一次Boss阈值，则生成Boss
+                    bossSpawnCount++;
+                    // Boss 总是从屏幕中央顶部生成
+                    int bossX = Main.WINDOW_WIDTH / 2;
+
+                    int bossY = ImageManager.BOSS_ENEMY_IMAGE.getHeight() / 2;
+                    enemyAircrafts.add(bossFactory.createAircraft(bossX, bossY));
+
+                    // 阈值增加，使下一次Boss出现更难
+                    bossScoreThreshold += bossadd; // 调整下一次阈值
+                }
+
             }
 
             // 子弹移动
@@ -166,23 +187,25 @@ public class Game extends JPanel {
     //      Action 各部分
     //***********************
 
-    private boolean timeCountAndNewCycleJudge() {
-        cycleTime += timeInterval;
-        if (cycleTime >= cycleDuration) {
-            // 跨越到新的周期
-            cycleTime %= cycleDuration;
-            return true;
-        } else {
-            return false;
-        }
-    }
+//    private boolean timeCountAndNewCycleJudge() {
+//        cycleTime += timeInterval;
+//        if (cycleTime >= shootDuration) {
+//            // 跨越到新的周期
+//            cycleTime %= shootDuration;
+//            return true;
+//        } else {
+//            return false;
+//        }
+//    }
 
     private void shootAction() {
         // TODO 敌机射击
         for (AbstractAircraft enemyAircraft : enemyAircrafts) {
-            if (enemyAircraft instanceof EliteEnemy) {
-                // 只有精英机才能射击
-                enemyBullets.addAll(((EliteEnemy) enemyAircraft).shoot());
+            if (enemyAircraft instanceof EliteEnemy
+                    || enemyAircraft instanceof SuperEliteEnemy
+                    || enemyAircraft instanceof BossEnemy) {
+                // 三种敌机能射击
+                enemyBullets.addAll(enemyAircraft.shoot());
             }
         }
         // 英雄射击 (使用成员变量的shoot方法)
@@ -199,7 +222,7 @@ public class Game extends JPanel {
     }
 
     private void aircraftsMoveAction() {
-        // **修正：移除 EliteEnemy 的生成逻辑（已移至工厂）**
+        // 修正：移除 EliteEnemy 的生成逻辑（已移至工厂）
         for (AbstractAircraft enemyAircraft : enemyAircrafts) {
             enemyAircraft.forward();
         }
@@ -245,19 +268,33 @@ public class Game extends JPanel {
                     if (enemyAircraft.notValid()) {
                         // 获得分数，产生道具补给
                         score += 10;
+                        // 道具掉落逻辑
+                        int dropCount = 0;
                         if (enemyAircraft instanceof EliteEnemy) {
-                            // **修正：使用道具工厂生成道具**
-                            AbstractProp droppedProp = propSpawner.spawnProp(
+                            // EliteEnemy 掉落 <= 1 个道具
+                            dropCount = random.nextDouble() < 0.7 ? 1 : 0;
+                        } else if (enemyAircraft instanceof SuperEliteEnemy) {
+                            // SuperEliteEnemy 随机掉落 <= 1 个道具
+                            dropCount = random.nextDouble() < 0.9 ? 1 : 0;
+                        } else if (enemyAircraft instanceof BossEnemy) {
+                            // BossEnemy 随机掉落 <= 3 个道具
+                            // 假设 100% 概率掉落 1-3 个
+                            dropCount = random.nextInt(3) + 1;
+                        }
+
+                        // 生成道具
+                        if (dropCount > 0) {
+                            props.addAll(propSpawner.spawnMultipleProps(
                                     enemyAircraft.getLocationX(),
-                                    enemyAircraft.getLocationY()
-                            );
-                            props.add(droppedProp);
-                            // 确保 EliteEnemy 内部的 dropProps() 已被移除或返回空列表
+                                    enemyAircraft.getLocationY(),
+                                    dropCount
+                            ));
                         }
                     }
                 }
 
-                // 英雄机 与 敌机 相撞，均损毁
+
+                // 英雄机与敌机相撞，均损毁
                 if (enemyAircraft.crash(heroAircraft) || heroAircraft.crash(enemyAircraft)) {
                     enemyAircraft.vanish();
                     heroAircraft.decreaseHp(Integer.MAX_VALUE);

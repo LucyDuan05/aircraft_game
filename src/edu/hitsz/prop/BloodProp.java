@@ -5,7 +5,7 @@ import edu.hitsz.aircraft.HeroAircraft;
 public class BloodProp extends AbstractProp {
 
     // 恢复的血量值，可以根据游戏难度调整
-    private final int recoverHp = 20;
+    private final int recoverHp = 30;
 
     public BloodProp(int locationX, int locationY, int speedX, int speedY) {
         // 调用父类的构造函数来初始化位置和速度

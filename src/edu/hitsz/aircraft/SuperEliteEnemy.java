@@ -7,10 +7,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SuperEliteEnemy extends AbstractAircraft{
-    private int shootNum = 3;
-    private int power = 20;
+    // private int shootNum = 3;
+    private int power = 10;
     private int direction = 1;
-    private int shootInterval = 600;
+    private int shootInterval = 1000;
     private int shootTimer = 0;
 
     public SuperEliteEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
@@ -33,8 +33,8 @@ public class SuperEliteEnemy extends AbstractAircraft{
 
             int x = this.getLocationX();
             int y = this.getLocationY() + this.direction * 2;
-            int speedY = this.getSpeedY() + this.direction * 5;
-            int deltaSpeedX = 5; // 子弹横向速度增量
+            int speedY = this.getSpeedY() + this.direction * 2;
+            int deltaSpeedX = 2; // 子弹横向速度增量
 
             // 散射弹道：同时发射3颗子弹，呈扇形 (中，左，右)
             // 1. 中间子弹

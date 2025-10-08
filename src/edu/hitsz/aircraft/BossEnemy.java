@@ -8,11 +8,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class BossEnemy extends AbstractAircraft{
-    private int shootNum = 12;
-    private int power = 15;
-    private int shootInterval = 600;
+    private int shootNum = 20;
+    private int power = 10;
+    private int shootInterval = 4000;
     private int shootTimer = 0;
-    private int bulletSpeed = 5;
+    private int bulletSpeed = 10;
 
     public BossEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
@@ -42,6 +42,7 @@ public class BossEnemy extends AbstractAircraft{
             int x = this.getLocationX();
             int y = this.getLocationY();
 
+            int speedMagnitude = this.bulletSpeed;
             // 环形弹道：同时发射12颗子弹
             double deltaAngle = 360.0 / shootNum; // 每颗子弹的角度间隔
 
@@ -49,8 +50,8 @@ public class BossEnemy extends AbstractAircraft{
                 double angle = i * deltaAngle;
                 // 计算子弹的 x, y 速度分量
                 // 使用 Math.toRadians(angle) 将角度转换为弧度
-                int speedX = (int) (bulletSpeed * Math.cos(Math.toRadians(angle)));
-                int speedY = (int) (bulletSpeed * Math.sin(Math.toRadians(angle)));
+                int speedX = (int) (speedMagnitude * Math.cos(Math.toRadians(angle)));
+                int speedY = (int) (speedMagnitude * Math.sin(Math.toRadians(angle)));
 
                 // 子弹初始位置在 Boss 中心
                 res.add(new EnemyBullet(x, y, speedX, speedY, this.power));

@@ -11,8 +11,8 @@ public class RandomEnemySpawner {
     // 存储所有具体工厂
     private final List<AircraftFactory> factoryList;
     // 存储每个工厂对应的概率（累计概率）
-    // 假设 Mob: 65%, Elite: 20%, Super:10%, Boss:5%
-    private final List<Double> rateList = Arrays.asList(0.65, 0.85, 0.95, 1.0); // 0.7为Mob的界限，1.0为Elite的界限
+    // 假设 Mob: 80%, Elite: 15%, Super:5%
+    private final List<Double> rateList = Arrays.asList(0.8, 0.95, 1.0); // 0.7为Mob的界限，1.0为Elite的界限
 
     private final Random random = new Random();
 
@@ -21,8 +21,7 @@ public class RandomEnemySpawner {
         this.factoryList = Arrays.asList(
                 new MobEnemyFactory(),  // 索引 0
                 new EliteEnemyFactory(),// 索引 1
-                new SuperEliteEnemyFactory(), // 索引2
-                new BossEnemyFactory() // 索引3
+                new SuperEliteEnemyFactory() // 索引2
         );
     }
 
@@ -42,11 +41,8 @@ public class RandomEnemySpawner {
         } else if (select < rateList.get(1)) { // EliteEnemy
             selectedFactory = factoryList.get(1);
             width = ImageManager.ELITE_ENEMY_IMAGE.getWidth();
-        } else if (select < rateList.get(2)) { // EliteEnemy
-            selectedFactory = factoryList.get(2);
-            width = ImageManager.ELITE_ENEMY_IMAGE.getWidth();
         } else { // EliteEnemy
-            selectedFactory = factoryList.get(3);
+            selectedFactory = factoryList.get(2);
             width = ImageManager.ELITE_ENEMY_IMAGE.getWidth();
         }
 
