@@ -132,8 +132,18 @@ public abstract class AbstractFlyingObject {
         this.locationY = (int) locationY;
     }
 
+    // 添加速度的getter和setter方法
+    public int getSpeedX() {
+        return speedX;
+    }
     public int getSpeedY() {
         return speedY;
+    }
+    public void setSpeedX(int speedX) {
+        this.speedX = speedX;
+    }
+    public void setSpeedY(int speedY) {
+        this.speedY = speedY;
     }
 
     public BufferedImage getImage() {

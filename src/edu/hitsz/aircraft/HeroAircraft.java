@@ -85,5 +85,13 @@ public class HeroAircraft extends AbstractAircraft {
         }
         return res;
     }
-
+    // 专门为单元测试提供方便的公共方法，暴露内部状态
+    public boolean isAliveForTest() {
+        // 假设 AbstractAircraft 继承自 AbstractFlyingObject，
+        // 那么 HeroAircraft 可以访问继承来的 protected 方法 isValid()
+        return this.isValid;
+    }
+    public void revalidateForTest() {
+        this.isValid = true;
+    }
 }

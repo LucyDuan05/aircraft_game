@@ -29,7 +29,11 @@ public class RandomPropSpawner {
         // 随机选择 0, 1, 或 2
         int index = random.nextInt(factoryList.size());
 
+        // 增加偏移逻辑，为多道具掉落增加随机偏移，防止堆叠
+        int offsetX = random.nextInt(40) - 20; // -20 到 19
+        int offsetY = random.nextInt(40) - 20;
+
         // 调用选中的工厂来创建道具
-        return factoryList.get(index).createProp(locationX, locationY);
+        return factoryList.get(index).createProp(locationX + offsetX, locationY + offsetY);
     }
 }

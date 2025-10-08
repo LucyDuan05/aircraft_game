@@ -40,6 +40,8 @@ public class ImageManager {
     public static BufferedImage BLOOD_PROP_IMAGE;
     public static BufferedImage FIRE_PROP_IMAGE;
     public static BufferedImage BOMB_PROP_IMAGE;
+    public static BufferedImage SUPER_ELITE_ENEMY_IMAGE;
+    public static BufferedImage BOSS_ENEMY_IMAGE;
 
     static {
         try {
@@ -54,6 +56,8 @@ public class ImageManager {
             BLOOD_PROP_IMAGE = ImageIO.read(new FileInputStream("src/images/prop_blood.png"));
             FIRE_PROP_IMAGE = ImageIO.read(new FileInputStream("src/images/prop_bullet.png"));
             BOMB_PROP_IMAGE = ImageIO.read(new FileInputStream("src/images/prop_bomb.png"));
+            SUPER_ELITE_ENEMY_IMAGE = ImageIO.read(new FileInputStream("src/images/elitePlus.png"));
+            BOSS_ENEMY_IMAGE = ImageIO.read(new FileInputStream("src/images/boss.png"));
 
             CLASSNAME_IMAGE_MAP.put(HeroAircraft.class.getName(), HERO_IMAGE);
             CLASSNAME_IMAGE_MAP.put(MobEnemy.class.getName(), MOB_ENEMY_IMAGE);
@@ -63,6 +67,8 @@ public class ImageManager {
             CLASSNAME_IMAGE_MAP.put(BloodProp.class.getName(), BLOOD_PROP_IMAGE);
             CLASSNAME_IMAGE_MAP.put(FireProp.class.getName(), FIRE_PROP_IMAGE);
             CLASSNAME_IMAGE_MAP.put(BombProp.class.getName(), BOMB_PROP_IMAGE);
+            CLASSNAME_IMAGE_MAP.put(BombProp.class.getName(), SUPER_ELITE_ENEMY_IMAGE);
+            CLASSNAME_IMAGE_MAP.put(BombProp.class.getName(), BOSS_ENEMY_IMAGE);
 
 
         } catch (IOException e) {

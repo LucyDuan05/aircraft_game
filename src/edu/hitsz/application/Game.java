@@ -37,6 +37,8 @@ public class Game extends JPanel {
     private final RandomEnemySpawner aircraftSpawner = new RandomEnemySpawner();
     private final RandomPropSpawner propSpawner = new RandomPropSpawner();
 
+    private final BossEnemyFactory bossFactory = new BossEnemyFactory();
+
     // 单例模式实例
     private final HeroAircraft heroAircraft;
 
@@ -66,6 +68,9 @@ public class Game extends JPanel {
      */
     private int cycleDuration = 600;
     private int cycleTime = 0;
+
+    private int bossScoreThreshold = 500;   // Boss 出现的分数阈值
+    private int bossSpawnCount = 0;         // 记录 Boss 出现次数
 
     private final Random random = new Random();
 
@@ -113,7 +118,7 @@ public class Game extends JPanel {
             if (timeCountAndNewCycleJudge()) {
                 System.out.println(time);
 
-                // **修正：新敌机随机产生 (使用工厂模式)**
+                // 修正：新敌机随机产生 (使用工厂模式)
                 if (enemyAircrafts.size() < enemyMaxNumber) {
                     enemyAircrafts.add(aircraftSpawner.spawnEnemy());
                 }
