@@ -1,11 +1,7 @@
 # AircraftWar
 
-实验一作业：
+实验三作业：
     
-    代码在src/edu/hitsz文件夹内，新增道具抽象类AbstractProp、三个道具类(BloodProp, BombProp, FireProp)，位于prop文件夹内；
-    
-    新增精英机EliteEnemy类，位于aircraft文件夹内；
-    
-    以及更新了游戏流程(完善了Game, ImageManager函数)。
+    新增单元测试代码test/StrassenMatrixMultiplicationTest.java 和 test/edu/hitsz/aircraft/HeroAircraftTest.java    
 
-    类图的代码及图片在uml文件夹内，命名为实验一类图。
+    新增超级精英敌机和boss敌机，实现对应的创建、射击和奖励逻辑，代码在src/edu/hitsz/aircraft文件夹内
