@@ -1,11 +1,17 @@
 # AircraftWar
 
-实验一作业：
+实验二作业：
     
-    代码在src/edu/hitsz文件夹内，新增道具抽象类AbstractProp、三个道具类(BloodProp, BombProp, FireProp)，位于prop文件夹内；
+- 代码在src/edu/hitsz文件夹内，共进行两个改变：
     
-    新增精英机EliteEnemy类，位于aircraft文件夹内；
+    - 1、将英雄机修改为单例模式：
+      - 修改了HeroAircraft
+      - 修改了Game类中创建英雄机的逻辑  
     
-    以及更新了游戏流程(完善了Game, ImageManager函数)。
-
-    类图的代码及图片在uml文件夹内，命名为实验一类图。
+    - 2、将敌机和道具修改为工厂模式
+      - 添加了工厂实体EliteEnemyFactory、MobEnemyFactory、BloodPropFactory、FirePropFactory、BombPropFactory
+      - 添加了抽象工厂接口AircraftFactory、PropFactory
+      - 添加了构造器RandomEnemySpawner、RandomPropSpawner，负责处理敌机的创建逻辑
+      - 修改了Game类中创建敌机的逻辑
+    
+- 类图的代码及图片在uml文件夹内，命名为HeroAircraft单例模式、EnemyFactory、PropFactory类图。
