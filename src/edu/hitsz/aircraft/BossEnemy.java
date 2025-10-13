@@ -1,5 +1,6 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.application.Main;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.bullet.EnemyBullet;
@@ -16,6 +17,9 @@ public class BossEnemy extends AbstractAircraft{
 
     public BossEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
+        // 设置 BossEnemy 的策略：直射
+        this.shootStrategy = new StraightShoot();
+        this.shootDirection = 1;
     }
 
     @Override
@@ -36,26 +40,11 @@ public class BossEnemy extends AbstractAircraft{
     @Override
     public List<BaseBullet> shoot() {
         List<BaseBullet> res = new LinkedList<>();
+        // 检查射击计时器是否归零
         if (shootTimer >= shootInterval) {
             shootTimer = 0; // 重置计时器
-
-            int x = this.getLocationX();
-            int y = this.getLocationY();
-
-            int speedMagnitude = this.bulletSpeed;
-            // 环形弹道：同时发射12颗子弹
-            double deltaAngle = 360.0 / shootNum; // 每颗子弹的角度间隔
-
-            for (int i = 0; i < shootNum; i++) {
-                double angle = i * deltaAngle;
-                // 计算子弹的 x, y 速度分量
-                // 使用 Math.toRadians(angle) 将角度转换为弧度
-                int speedX = (int) (speedMagnitude * Math.cos(Math.toRadians(angle)));
-                int speedY = (int) (speedMagnitude * Math.sin(Math.toRadians(angle)));
-
-                // 子弹初始位置在 Boss 中心
-                res.add(new EnemyBullet(x, y, speedX, speedY, this.power));
-            }
+            // 使用策略模式执行射击
+            res.addAll(this.shootStrategy.executeShoot(this, this.shootDirection, this.power));
         }
         return res;
     }

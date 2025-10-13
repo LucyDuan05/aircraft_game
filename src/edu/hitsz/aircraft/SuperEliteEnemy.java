@@ -1,5 +1,6 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.bullet.EnemyBullet;
 
@@ -15,6 +16,9 @@ public class SuperEliteEnemy extends AbstractAircraft{
 
     public SuperEliteEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
+        // 设置 SuperEliteEnemy 的策略：散射
+        this.shootStrategy = new StraightShoot();
+        this.shootDirection = this.direction;
     }
 
     @Override
@@ -28,21 +32,11 @@ public class SuperEliteEnemy extends AbstractAircraft{
     @Override   // 重写子弹发射方法，更新超级精英机的射击逻辑
     public List<BaseBullet> shoot() {
         List<BaseBullet> res = new LinkedList<>();
+        // 检查射击计时器是否归零
         if (shootTimer >= shootInterval) {
             shootTimer = 0; // 重置计时器
-
-            int x = this.getLocationX();
-            int y = this.getLocationY() + this.direction * 2;
-            int speedY = this.getSpeedY() + this.direction * 2;
-            int deltaSpeedX = 2; // 子弹横向速度增量
-
-            // 散射弹道：同时发射3颗子弹，呈扇形 (中，左，右)
-            // 1. 中间子弹
-            res.add(new EnemyBullet(x, y, 0, speedY, this.power));
-            // 2. 左边子弹
-            res.add(new EnemyBullet(x, y, -deltaSpeedX, speedY, this.power));
-            // 3. 右边子弹
-            res.add(new EnemyBullet(x, y, deltaSpeedX, speedY, this.power));
+            // 使用策略模式执行射击
+            res.addAll(this.shootStrategy.executeShoot(this, this.shootDirection, this.power));
         }
         return res;
     }

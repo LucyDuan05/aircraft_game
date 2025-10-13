@@ -1,5 +1,6 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.aircraft.shoot.ShootStrategy;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 
@@ -17,6 +18,11 @@ public abstract class AbstractAircraft extends AbstractFlyingObject {
      */
     protected int maxHp;
     protected int hp;
+
+    // 射击策略
+    protected ShootStrategy shootStrategy;
+    // 子弹方向 (1:向下, -1:向上)
+    protected int shootDirection = 1;
 
     public AbstractAircraft(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY);
@@ -38,13 +44,13 @@ public abstract class AbstractAircraft extends AbstractFlyingObject {
         return hp;
     }
 
+    // 设置射击策略的方法
+    public void setShootStrategy(ShootStrategy strategy) {
+        this.shootStrategy = strategy;
+    }
 
-    /**
-     * 飞机射击方法，可射击对象必须实现
-     * @return
-     *  可射击对象需实现，返回子弹
-     *  非可射击对象空实现，返回null
-     */
+    // 抽象方法 shoot() 更改为使用策略
+    // 英雄机和敌机有不同的 power 和 direction，具体在子类中初始化
     public abstract List<BaseBullet> shoot();
 
 }

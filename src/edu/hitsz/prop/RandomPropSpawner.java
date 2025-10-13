@@ -16,9 +16,12 @@ public class RandomPropSpawner {
         this.factoryList = Arrays.asList(
                 new BloodPropFactory(), // 可以显式向下转型
                 new FirePropFactory(),
+                new SuperFirePropFactory(),
                 new BombPropFactory()
         );
     }
+
+    private final List<Double> rateList = Arrays.asList(0.25, 0.6, 0.95, 1.0);
 
     /**
      * 随机选择一个道具工厂来创建道具（假设等概率）
@@ -27,8 +30,15 @@ public class RandomPropSpawner {
      * @return AbstractProp
      */
     public AbstractProp spawnProp(int locationX, int locationY) {
-        // 随机选择 0, 1, 或 2
-        int index = random.nextInt(factoryList.size());
+        double select = random.nextDouble();
+        int index = 0;
+
+        for (int i = 0; i < 4; i++) {
+            if (select < rateList.get(i)) {
+                index = i;
+                break;
+            }
+        }
 
         // 增加偏移逻辑，为多道具掉落增加随机偏移，防止堆叠
         int offsetX = random.nextInt(40) - 20;

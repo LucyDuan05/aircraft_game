@@ -1,5 +1,7 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.aircraft.shoot.ShootStrategy;
+import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.application.ImageManager;
 import edu.hitsz.application.Main;
 import edu.hitsz.bullet.BaseBullet;
@@ -35,6 +37,9 @@ public class HeroAircraft extends AbstractAircraft {
     private HeroAircraft(int locationX, int locationY, int speedX, int speedY, int hp){
         // 调用父类构造函数进行初始化
         super(locationX, locationY, speedX, speedY, hp);
+        // 设置默认策略：直射
+        this.shootStrategy = new StraightShoot();
+        this.shootDirection = this.direction;
     }
 
     // 3. 公有静态方法：全局访问点，无参数,解决 API 歧义问题
@@ -71,27 +76,13 @@ public class HeroAircraft extends AbstractAircraft {
      * @return 射击出的子弹List
      */
     public List<BaseBullet> shoot() {
-        List<BaseBullet> res = new LinkedList<>();
-        int x = this.getLocationX();
-        int y = this.getLocationY() + direction*2;
-        int speedX = 0;
-        int speedY = this.getSpeedY() + direction*10;
-        BaseBullet bullet;
-        for(int i=0; i<shootNum; i++){
-            // 子弹发射位置相对飞机位置向前偏移
-            // 多个子弹横向分散
-            bullet = new HeroBullet(x + (i*2 - shootNum + 1)*10, y, speedX, speedY, power);
-            res.add(bullet);
-        }
-        return res;
+        return this.shootStrategy.executeShoot(this, this.shootDirection, this.power);
     }
-    // 专门为单元测试提供方便的公共方法，暴露内部状态
-    public boolean isAliveForTest() {
-        // 假设 AbstractAircraft 继承自 AbstractFlyingObject，
-        // 那么 HeroAircraft 可以访问继承来的 protected 方法 isValid()
-        return this.isValid;
-    }
-    public void revalidateForTest() {
-        this.isValid = true;
+    /**
+     * 英雄机切换射击策略的方法
+     * @param newStrategy 新的射击策略
+     */
+    public void changeShootStrategy(ShootStrategy newStrategy) {
+        this.shootStrategy = newStrategy;
     }
 }

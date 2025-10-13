@@ -11,6 +11,7 @@ import edu.hitsz.aircraft.BossEnemy;
 import edu.hitsz.prop.BloodProp;
 import edu.hitsz.prop.FireProp;
 import edu.hitsz.prop.BombProp;
+import edu.hitsz.prop.SuperFireProp;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -44,6 +45,7 @@ public class ImageManager {
     public static BufferedImage BOMB_PROP_IMAGE;
     public static BufferedImage SUPER_ELITE_ENEMY_IMAGE;
     public static BufferedImage BOSS_ENEMY_IMAGE;
+    public static BufferedImage SUPER_FIRE_PROP_IMAGE;
 
     static {
         try {
@@ -60,6 +62,7 @@ public class ImageManager {
             BOMB_PROP_IMAGE = ImageIO.read(new FileInputStream("src/images/prop_bomb.png"));
             SUPER_ELITE_ENEMY_IMAGE = ImageIO.read(new FileInputStream("src/images/elitePlus.png"));
             BOSS_ENEMY_IMAGE = ImageIO.read(new FileInputStream("src/images/boss.png"));
+            SUPER_FIRE_PROP_IMAGE = ImageIO.read(new FileInputStream("src/images/prop_bulletPlus.png"));
 
             CLASSNAME_IMAGE_MAP.put(HeroAircraft.class.getName(), HERO_IMAGE);
             CLASSNAME_IMAGE_MAP.put(MobEnemy.class.getName(), MOB_ENEMY_IMAGE);
@@ -71,7 +74,7 @@ public class ImageManager {
             CLASSNAME_IMAGE_MAP.put(BombProp.class.getName(), BOMB_PROP_IMAGE);
             CLASSNAME_IMAGE_MAP.put(SuperEliteEnemy.class.getName(), SUPER_ELITE_ENEMY_IMAGE);
             CLASSNAME_IMAGE_MAP.put(BossEnemy.class.getName(), BOSS_ENEMY_IMAGE);
-
+            CLASSNAME_IMAGE_MAP.put(SuperFireProp.class.getName(), SUPER_FIRE_PROP_IMAGE);
 
         } catch (IOException e) {
             e.printStackTrace();

@@ -4,7 +4,9 @@ import edu.hitsz.aircraft.*;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.prop.AbstractProp;
+import edu.hitsz.prop.FireProp;
 import edu.hitsz.prop.RandomPropSpawner;
+import edu.hitsz.prop.SuperFireProp;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
 import javax.swing.*;
@@ -67,7 +69,7 @@ public class Game extends JPanel {
      * 指示子弹的发射、敌机的产生频率
      */
     private int spawnDuration = 1040;
-    private int shootDuration = 280;
+    private int shootDuration = 520;
     private int cycleTime = 0;
 
     private int bossScoreThreshold = 300;   // Boss 出现的分数阈值
@@ -309,6 +311,11 @@ public class Game extends JPanel {
             }
             if (heroAircraft.crash(prop) || prop.crash(heroAircraft)) {
                 prop.effect(heroAircraft);
+                if (prop instanceof FireProp) {
+                    this.shootDuration = 1040;
+                } else if (prop instanceof SuperFireProp) {
+                    this.shootDuration = 1480;
+                }
                 prop.vanish(); // 道具使用后必须消失
             }
         }
