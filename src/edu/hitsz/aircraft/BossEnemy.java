@@ -1,5 +1,6 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.aircraft.shoot.CircularShoot;
 import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.application.Main;
 import edu.hitsz.bullet.BaseBullet;
@@ -18,7 +19,7 @@ public class BossEnemy extends AbstractAircraft{
     public BossEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
         // 设置 BossEnemy 的策略：直射
-        this.shootStrategy = new StraightShoot();
+        this.shootStrategy = new CircularShoot();
         this.shootDirection = 1;
     }
 

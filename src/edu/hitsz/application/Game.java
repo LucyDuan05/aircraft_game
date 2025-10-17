@@ -8,6 +8,9 @@ import edu.hitsz.prop.FireProp;
 import edu.hitsz.prop.RandomPropSpawner;
 import edu.hitsz.prop.SuperFireProp;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import edu.hitsz.data.ScoreDao;
+import edu.hitsz.data.ScoreDaoImpl;
+import edu.hitsz.data.ScoreRecord;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
+import java.time.LocalDateTime;
 
 /**
  * 游戏主面板，游戏启动
@@ -24,7 +28,7 @@ import java.util.concurrent.*;
 public class Game extends JPanel {
 
     private int backGroundTop = 0;
-
+    private String TestPlayer = "player";
     /**
      * Scheduled 线程池，用于任务调度
      */
@@ -83,6 +87,9 @@ public class Game extends JPanel {
      */
     private boolean gameOverFlag = false;
 
+    // DAO 成员变量
+    private ScoreDao scoreDao;
+
     // 构造函数不再接受列表参数
     public Game() {
 
@@ -94,6 +101,8 @@ public class Game extends JPanel {
 
         // 单例模式 & 无参数方法
         this.heroAircraft = HeroAircraft.getInstance();
+
+        this.scoreDao = new ScoreDaoImpl();
 
         /**
          * Scheduled 线程池，用于定时任务调度...
@@ -173,7 +182,20 @@ public class Game extends JPanel {
                 // 游戏结束
                 executorService.shutdown();
                 gameOverFlag = true;
-                System.out.println("Game Over!");
+                System.out.println("Game Over! 最终得分: " + this.score);
+                // 1. 获取用户输入（本次实验无需实现交互，模拟输入）
+                // enter玩家名
+                String playerName = TestPlayer + (new Random().nextInt(100));
+
+                // 2. 创建得分记录对象
+                ScoreRecord newRecord = new ScoreRecord(playerName, this.score, LocalDateTime.now());
+
+                // 3. 使用 DAO 添加新的得分记录
+                scoreDao.addScore(newRecord);
+
+                // 4. 使用 DAO 获取并打印排行榜
+                List<ScoreRecord> allScores = scoreDao.getAllScores();
+                scoreDao.printScores(allScores);
             }
 
         };
