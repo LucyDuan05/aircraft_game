@@ -82,7 +82,7 @@ public class HeroAircraft extends AbstractAircraft {
      * 英雄机切换射击策略的方法
      * @param newStrategy 新的射击策略
      */
-    public void changeShootStrategy(ShootStrategy newStrategy) {
+    public void setShootStrategy(ShootStrategy newStrategy) {
         this.shootStrategy = newStrategy;
     }
 }

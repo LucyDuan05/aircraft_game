@@ -18,7 +18,7 @@ public class FireProp extends AbstractProp {
     public void effect(HeroAircraft heroAircraft) {
         System.out.println("FireSupply active!");
         // 功能: 散射
-        heroAircraft.changeShootStrategy(new ScatterShoot());
+        heroAircraft.setShootStrategy(new ScatterShoot());
         // 调用 vanish() 方法让道具从游戏中消失
         this.vanish();
     }

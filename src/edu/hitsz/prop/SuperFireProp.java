@@ -18,7 +18,7 @@ public class SuperFireProp extends AbstractProp {
     public void effect(HeroAircraft heroAircraft) {
         System.out.println("FireSupply active!");
         // 功能: 环射
-        heroAircraft.changeShootStrategy(new CircularShoot());
+        heroAircraft.setShootStrategy(new CircularShoot());
         // 调用 vanish() 方法让道具从游戏中消失
         this.vanish();
     }
