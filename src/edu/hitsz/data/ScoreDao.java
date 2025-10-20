@@ -25,9 +25,16 @@ public interface ScoreDao {
      */
     void clearScores();
 
+    void removeScore(ScoreRecord record);
     /**
      * 打印排行榜到控制台
      * @param scoreRecords 要打印的记录列表
      */
     void printScores(List<ScoreRecord> scoreRecords);
+
+    /**
+     * 移除排行榜中指定索引位置的记录
+     * @param index 要移除的记录在当前排序列表中的索引
+     */
+    void removeScoreByIndex(int index);
 }

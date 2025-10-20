@@ -37,6 +37,42 @@ public class ScoreDaoImpl implements ScoreDao {
         saveToFile(); // 添加后保存到文件
     }
 
+    /**
+     * 新增方法：从列表中移除指定的得分记录，并保存到文件。
+     */
+    @Override
+    public void removeScore(ScoreRecord record) {
+        // 由于 ScoreRecord 是通过值创建的，我们依赖其 equals/hashCode 或直接引用比较。
+        // 假设 LinkedList 中的对象与传入的对象是同一实例，或者 ScoreRecord 实现了 equals。
+        // 如果 ScoreRecord 只是数据结构，则直接使用 remove。
+        if (this.scoreRecords.remove(record)) {
+            saveToFile(); // 移除成功后保存到文件
+        }
+    }
+
+    /**
+     * 实现按索引删除：从排序后的列表中获取对象，然后从原始列表中删除它。
+     */
+    @Override
+    public void removeScoreByIndex(int index) {
+        // 1. 获取当前排序后的列表（RankPanel显示的视图）
+        List<ScoreRecord> sortedRecords = getAllScores();
+
+        if (index >= 0 && index < sortedRecords.size()) {
+            // 2. 获取要删除的记录对象
+            ScoreRecord recordToDelete = sortedRecords.get(index);
+
+            // 3. 从内部的原始列表中移除该对象 (依赖 ScoreRecord 的 equals/hashCode)
+            if (this.scoreRecords.remove(recordToDelete)) {
+                System.out.println("成功删除索引 " + index + " 的记录: " + recordToDelete.getUserName());
+                saveToFile(); // 移除成功后保存到文件
+            } else {
+                // 如果对象删除失败，可能还是因为 equals/hashCode/时间精度问题
+                System.err.println("错误：无法通过对象引用/值删除记录，请检查 ScoreRecord 的 equals 实现。");
+            }
+        }
+    }
+
     @Override
     public void clearScores() {
         this.scoreRecords.clear();

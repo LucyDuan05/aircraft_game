@@ -89,9 +89,17 @@ public class Game extends JPanel {
 
     // DAO 成员变量
     private ScoreDao scoreDao;
+    // MainFrame 引用
+    private Main mainFrame;
+    private SoundManager soundManager;
+    private int difficulty;
 
-    // 构造函数不再接受列表参数
-    public Game() {
+    // 构造函数接受 MainFrame 引用
+    public Game(Main mainFrame, int difficulty) {
+        this.mainFrame = mainFrame;
+        this.difficulty = difficulty;
+        this.soundManager = mainFrame.getSoundManager(); // 获取 SoundManager
+        this.scoreDao = mainFrame.getScoreDao();         // 从 MainFrame 获取 DAO
 
         // 初始化列表成员变量
         this.enemyAircrafts = new LinkedList<>();
@@ -101,8 +109,6 @@ public class Game extends JPanel {
 
         // 单例模式 & 无参数方法
         this.heroAircraft = HeroAircraft.getInstance();
-
-        this.scoreDao = new ScoreDaoImpl();
 
         /**
          * Scheduled 线程池，用于定时任务调度...
@@ -153,6 +159,10 @@ public class Game extends JPanel {
                     int bossY = ImageManager.BOSS_ENEMY_IMAGE.getHeight() / 2;
                     enemyAircrafts.add(bossFactory.createAircraft(bossX, bossY));
 
+                    // **音效：Boss 出场**
+                    soundManager.stopBgm();
+                    soundManager.playBossBgm();
+
                     // 阈值增加，使下一次Boss出现更难
                     bossScoreThreshold += bossadd; // 调整下一次阈值
                 }
@@ -182,10 +192,18 @@ public class Game extends JPanel {
                 // 游戏结束
                 executorService.shutdown();
                 gameOverFlag = true;
+
+                // **音效：游戏结束**
+                soundManager.stopAll();
+                soundManager.playSound(SoundManager.GAME_OVER_PATH);
+
                 System.out.println("Game Over! 最终得分: " + this.score);
-                // 1. 获取用户输入（本次实验无需实现交互，模拟输入）
-                // enter玩家名
-                String playerName = TestPlayer + (new Random().nextInt(100));
+                // 1. 获取用户输入（本次实验需实现交互）
+                String playerName = JOptionPane.showInputDialog(this, "Game Over! 最终得分: " + this.score + "\n请输入您的名字:");
+
+                if (playerName == null || playerName.trim().isEmpty()) {
+                    playerName = "未知玩家";
+                }
 
                 // 2. 创建得分记录对象
                 ScoreRecord newRecord = new ScoreRecord(playerName, this.score, LocalDateTime.now());
@@ -193,9 +211,10 @@ public class Game extends JPanel {
                 // 3. 使用 DAO 添加新的得分记录
                 scoreDao.addScore(newRecord);
 
-                // 4. 使用 DAO 获取并打印排行榜
-                List<ScoreRecord> allScores = scoreDao.getAllScores();
-                scoreDao.printScores(allScores);
+                // 4. 通知主框架切换到排行榜页面
+                SwingUtilities.invokeLater(() -> {
+                    mainFrame.switchTo(Main.RANK_CARD);
+                });
             }
 
         };
@@ -234,6 +253,7 @@ public class Game extends JPanel {
         }
         // 英雄射击 (使用成员变量的shoot方法)
         heroBullets.addAll(heroAircraft.shoot());
+        soundManager.playSound(SoundManager.BULLET_PATH);
     }
 
     private void bulletsMoveAction() {
@@ -289,6 +309,7 @@ public class Game extends JPanel {
                     // 敌机撞击到英雄机子弹
                     enemyAircraft.decreaseHp(bullet.getPower());
                     bullet.vanish();
+                    soundManager.playSound(SoundManager.BULLET_HIT_PATH);
                     if (enemyAircraft.notValid()) {
                         // 获得分数，产生道具补给
                         score += 10;
@@ -304,6 +325,8 @@ public class Game extends JPanel {
                             // BossEnemy 随机掉落 <= 3 个道具
                             // 假设 100% 概率掉落 1-3 个
                             dropCount = random.nextInt(3) + 1;
+                            soundManager.stopBossBgm();
+                            soundManager.playBgm();
                         }
 
                         // 生成道具
@@ -322,6 +345,7 @@ public class Game extends JPanel {
                 if (enemyAircraft.crash(heroAircraft) || heroAircraft.crash(enemyAircraft)) {
                     enemyAircraft.vanish();
                     heroAircraft.decreaseHp(Integer.MAX_VALUE);
+
                 }
             }
         }
@@ -332,6 +356,8 @@ public class Game extends JPanel {
                 continue;
             }
             if (heroAircraft.crash(prop) || prop.crash(heroAircraft)) {
+                // **音效：道具生效音效**
+                soundManager.playSound(SoundManager.PROP_PATH);
                 prop.effect(heroAircraft);
                 if (prop instanceof FireProp) {
                     this.shootDuration = 1040;
@@ -373,8 +399,25 @@ public class Game extends JPanel {
         super.paint(g);
 
         // 绘制背景,图片滚动
-        g.drawImage(ImageManager.BACKGROUND_IMAGE, 0, this.backGroundTop - Main.WINDOW_HEIGHT, null);
-        g.drawImage(ImageManager.BACKGROUND_IMAGE, 0, this.backGroundTop, null);
+        switch (difficulty) {
+            case 1: {
+                g.drawImage(ImageManager.SINGLE_BACKGROUND_IMAGE, 0, this.backGroundTop - Main.WINDOW_HEIGHT, null);
+                g.drawImage(ImageManager.SINGLE_BACKGROUND_IMAGE, 0, this.backGroundTop, null);
+                break;
+            }
+            case 2: {
+                g.drawImage(ImageManager.NORMAL_BACKGROUND_IMAGE, 0, this.backGroundTop - Main.WINDOW_HEIGHT, null);
+                g.drawImage(ImageManager.NORMAL_BACKGROUND_IMAGE, 0, this.backGroundTop, null);
+                break;
+            }
+            case 3: {
+                g.drawImage(ImageManager.HARD_BACKGROUND_IMAGE, 0, this.backGroundTop - Main.WINDOW_HEIGHT, null);
+                g.drawImage(ImageManager.HARD_BACKGROUND_IMAGE, 0, this.backGroundTop, null);
+                break;
+            }
+
+        }
+
         this.backGroundTop += 1;
         if (this.backGroundTop == Main.WINDOW_HEIGHT) {
             this.backGroundTop = 0;
