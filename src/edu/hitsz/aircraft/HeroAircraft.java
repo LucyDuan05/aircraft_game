@@ -85,4 +85,22 @@ public class HeroAircraft extends AbstractAircraft {
     public void setShootStrategy(ShootStrategy newStrategy) {
         this.shootStrategy = newStrategy;
     }
+
+    public void reset() {
+        // 1. 重置生命值 (请使用您的初始生命值)
+        // 假设您的 HeroAircraft 构造函数中设置了初始HP，例如 1000
+        this.hp = INIT_HP; // <--- 示例值，请替换为您的英雄机初始HP
+
+        // 2. 重置位置 (通常在屏幕底部中央)
+        this.locationX = INIT_X;
+        this.locationY = INIT_Y;
+
+        // 3. 重置射击策略
+        // 从您的 Game.java 中看到，火力道具结束后会还原为 StraightShoot
+        // 因此默认策略应该是 StraightShoot
+        this.setShootStrategy(new StraightShoot());
+
+        // 4. 重置有效性 (如果您有 valid 字段或 vanish() 方法)
+        // this.valid = true; // (如果需要)
+    }
 }

@@ -1,12 +1,10 @@
 package edu.hitsz.application;
 
 import edu.hitsz.aircraft.*;
+import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
-import edu.hitsz.prop.AbstractProp;
-import edu.hitsz.prop.FireProp;
-import edu.hitsz.prop.RandomPropSpawner;
-import edu.hitsz.prop.SuperFireProp;
+import edu.hitsz.prop.*;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import edu.hitsz.data.ScoreDao;
 import edu.hitsz.data.ScoreDaoImpl;
@@ -17,6 +15,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
+// 修复：移除 LinkedList，导入 CopyOnWriteArrayList
 import java.util.concurrent.*;
 import java.time.LocalDateTime;
 
@@ -49,6 +48,7 @@ public class Game extends JPanel {
     private final HeroAircraft heroAircraft;
 
     // 游戏列表
+    // 修复：List 接口声明不变，实现改为 CopyOnWriteArrayList (见构造函数)
     private final List<AbstractAircraft> enemyAircrafts;
     private final List<BaseBullet> heroBullets;
     private final List<BaseBullet> enemyBullets;
@@ -62,7 +62,8 @@ public class Game extends JPanel {
     /**
      * 当前得分
      */
-    private int score = 0;
+    // 修复：添加 volatile 保证多线程可见性
+    private volatile int score = 0;
     /**
      * 当前时刻
      */
@@ -85,7 +86,8 @@ public class Game extends JPanel {
     /**
      * 游戏结束标志
      */
-    private boolean gameOverFlag = false;
+    // 修复：添加 volatile 保证多线程可见性
+    private volatile boolean gameOverFlag = false;
 
     // DAO 成员变量
     private ScoreDao scoreDao;
@@ -93,6 +95,13 @@ public class Game extends JPanel {
     private Main mainFrame;
     private SoundManager soundManager;
     private int difficulty;
+
+    private final int propDuration = 3000; // 道具效果持续时间，例如 8 秒 (8000ms)
+    private ScheduledFuture<?> firePropTimer; // 用于追踪当前道具计时器的 Future
+    private final int originalShootDuration = 520; // 记录英雄机默认射击间隔 (从您的初始化值获取)
+
+    // 修复：添加 volatile 保证多线程可见性
+    private volatile long propEndTime = 0;
 
     // 构造函数接受 MainFrame 引用
     public Game(Main mainFrame, int difficulty) {
@@ -102,14 +111,15 @@ public class Game extends JPanel {
         this.scoreDao = mainFrame.getScoreDao();         // 从 MainFrame 获取 DAO
 
         // 初始化列表成员变量
-        this.enemyAircrafts = new LinkedList<>();
-        this.heroBullets = new LinkedList<>();
-        this.enemyBullets = new LinkedList<>();
-        this.props = new LinkedList<>();
+        // 修复：使用 CopyOnWriteArrayList 替代 LinkedList，防止并发修改异常
+        this.enemyAircrafts = new CopyOnWriteArrayList<>();
+        this.heroBullets = new CopyOnWriteArrayList<>();
+        this.enemyBullets = new CopyOnWriteArrayList<>();
+        this.props = new CopyOnWriteArrayList<>();
 
         // 单例模式 & 无参数方法
         this.heroAircraft = HeroAircraft.getInstance();
-
+        this.heroAircraft.reset();
         /**
          * Scheduled 线程池，用于定时任务调度...
          */
@@ -130,6 +140,11 @@ public class Game extends JPanel {
 
         // 定时任务：绘制、对象产生、碰撞判定、击毁及结束判定
         Runnable task = () -> {
+
+            // 修复：检查 gameOverFlag，如果为 true，则任务不再执行任何操作
+            if (gameOverFlag) {
+                return;
+            }
 
             time += timeInterval;
 
@@ -190,7 +205,7 @@ public class Game extends JPanel {
             // 游戏结束检查英雄机是否存活
             if (heroAircraft.getHp() <= 0) {
                 // 游戏结束
-                executorService.shutdown();
+                executorService.shutdownNow();
                 gameOverFlag = true;
 
                 // **音效：游戏结束**
@@ -198,21 +213,24 @@ public class Game extends JPanel {
                 soundManager.playSound(SoundManager.GAME_OVER_PATH);
 
                 System.out.println("Game Over! 最终得分: " + this.score);
-                // 1. 获取用户输入（本次实验需实现交互）
-                String playerName = JOptionPane.showInputDialog(this, "Game Over! 最终得分: " + this.score + "\n请输入您的名字:");
 
-                if (playerName == null || playerName.trim().isEmpty()) {
-                    playerName = "未知玩家";
-                }
-
-                // 2. 创建得分记录对象
-                ScoreRecord newRecord = new ScoreRecord(playerName, this.score, LocalDateTime.now());
-
-                // 3. 使用 DAO 添加新的得分记录
-                scoreDao.addScore(newRecord);
-
-                // 4. 通知主框架切换到排行榜页面
+                // 修复：将所有 UI 交互（JOptionPane）和后续逻辑（DAO、界面切换）
+                // 放入 SwingUtilities.invokeLater，确保它们在 EDT (事件分发线程) 上执行
                 SwingUtilities.invokeLater(() -> {
+                    // 1. 获取用户输入（现在在 EDT 上执行，是安全的）
+                    String playerName = JOptionPane.showInputDialog(this, "Game Over! 最终得分: " + this.score + "\n请输入您的名字:");
+
+                    if (playerName == null || playerName.trim().isEmpty()) {
+                        playerName = "未知玩家";
+                    }
+
+                    // 2. 创建得分记录对象
+                    ScoreRecord newRecord = new ScoreRecord(playerName, this.score, LocalDateTime.now());
+
+                    // 3. 使用 DAO 添加新的得分记录
+                    scoreDao.addScore(newRecord);
+
+                    // 4. 通知主框架切换到排行榜页面
                     mainFrame.switchTo(Main.RANK_CARD);
                 });
             }
@@ -226,21 +244,16 @@ public class Game extends JPanel {
 
     }
 
-    //***********************
-    //      Action 各部分
-    //***********************
+    // ... (shootAction, bulletsMoveAction, aircraftsMoveAction, propsMoveAction 保持不变) ...
 
-//    private boolean timeCountAndNewCycleJudge() {
-//        cycleTime += timeInterval;
-//        if (cycleTime >= shootDuration) {
-//            // 跨越到新的周期
-//            cycleTime %= shootDuration;
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
+    // ... (crashCheckAction 保持不变) ...
 
+    // ... (postProcessAction 保持不变，CopyOnWriteArrayList 支持 removeIf) ...
+
+    // ... (paint, paintImageWithPositionRevised, paintScoreAndLife 保持不变) ...
+    // (paintScoreAndLife 读取 volatile 的 score 和 propEndTime 是安全的)
+
+    // 以下是 action() 中未修改的几个方法，为保持完整性而附上
     private void shootAction() {
         // TODO 敌机射击
         for (AbstractAircraft enemyAircraft : enemyAircrafts) {
@@ -358,12 +371,43 @@ public class Game extends JPanel {
             if (heroAircraft.crash(prop) || prop.crash(heroAircraft)) {
                 // **音效：道具生效音效**
                 soundManager.playSound(SoundManager.PROP_PATH);
+
+                // 策略修改：由 FireProp/SuperFireProp 的 effect 方法执行
                 prop.effect(heroAircraft);
-                if (prop instanceof FireProp) {
-                    this.shootDuration = 1040;
-                } else if (prop instanceof SuperFireProp) {
-                    this.shootDuration = 1480;
+
+                // 1. 取消任何现有的计时器，确保新道具覆盖旧道具
+                if (firePropTimer != null && !firePropTimer.isDone()) {
+                    firePropTimer.cancel(false);
                 }
+
+                // 2. 【新增/修复】设置频率，并调度还原任务
+                if (prop instanceof FireProp || prop instanceof SuperFireProp) {
+                    propEndTime = System.currentTimeMillis() + propDuration;
+                    // a. 设置新的射击频率（难度调整）
+//                    if (prop instanceof FireProp) {
+//                        this.shootDuration = 520;
+//                    } else if (prop instanceof SuperFireProp) {
+//                        this.shootDuration = 520;
+//                    }
+
+                    // b. 调度还原任务：【关键】同时还原策略和频率
+                    Runnable revertTask = () -> {
+                        // this.shootDuration = originalShootDuration; // 还原频率 (520ms)
+                        // 还原射击策略为 StraightShoot (默认策略)
+                        heroAircraft.setShootStrategy(new StraightShoot());
+                        propEndTime = 0;
+                    };
+
+                    // c. 启动 8 秒计时器
+                    firePropTimer = executorService.schedule(revertTask, propDuration, TimeUnit.MILLISECONDS);
+
+                }
+                else if (prop instanceof BombProp) {
+                    // 炸弹道具：只播放音效，不影响计时器
+                    // mainFrame.getSoundManager().playSound(SoundManager.BOMB_PATH);
+                    soundManager.playSound(SoundManager.PROP_PATH);
+                }
+
                 prop.vanish(); // 道具使用后必须消失
             }
         }
@@ -424,6 +468,7 @@ public class Game extends JPanel {
         }
 
         // 先绘制子弹，后绘制飞机
+        // 修复：此处迭代 CopyOnWriteArrayList 是线程安全的
         paintImageWithPositionRevised(g, enemyBullets);
         paintImageWithPositionRevised(g, heroBullets);
 
@@ -456,8 +501,22 @@ public class Game extends JPanel {
         int y = 25;
         g.setColor(new Color(16711680));
         g.setFont(new Font("SansSerif", Font.BOLD, 22));
+        // 修复：读取 volatile 的 score 是安全的
         g.drawString("SCORE:" + this.score, x, y);
         y = y + 20;
         g.drawString("LIFE:" + this.heroAircraft.getHp(), x, y);
+
+        // 修复：读取 volatile 的 propEndTime 是安全的
+        if (propEndTime > 0) {
+            // 计算剩余毫秒数
+            long timeLeftMs = propEndTime - System.currentTimeMillis();
+            // 转换为秒，保留一位小数
+            double timeLeftSec = Math.max(0, timeLeftMs / 1000.0);
+
+            // 在屏幕上绘制
+            y = y + 20;
+            g.setColor(new Color(65535)); // 蓝色
+            g.drawString(String.format("FIRE TIME: %.1f s", timeLeftSec), x, y);
+        }
     }
 }
