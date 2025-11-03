@@ -1,0 +1,242 @@
+@startuml
+title 飞机大战项目综合类图 (优化布局)
+
+' --- 皮肤设置 ---
+skinparam class {
+    BackgroundColor White
+    ArrowColor #222222
+    BorderColor #222222
+}
+skinparam interface {
+    BackgroundColor #AAFFAA
+}
+skinparam abstract {
+    BackgroundColor #FFAAAA
+}
+
+
+' ************************************
+' ** 1. 基础抽象层 (最顶层) **
+' ************************************
+
+abstract class AbstractFlyingObject {
+    # locationX: int
+    # locationY: int
+    # speedX: int
+    # speedY: int
+
+    + forward(): void
+    + decreaseHp(int decrease): void
+    + vanish(): void
+}
+
+abstract class BaseBullet extends AbstractFlyingObject
+
+class HeroBullet extends BaseBullet
+class EnemyBullet extends BaseBullet
+
+' ************************************
+' ** 2. 核心抽象与单例模式 (Singleton) **
+' ************************************
+
+abstract class AbstractAircraft extends AbstractFlyingObject {
+    # maxHp: int
+    # hp: int
+    # shootStrategy: ShootStrategy
+    # shootDirection: int
+
+    + AbstractAircraft(int x, int y, int sx, int sy, int hp)
+    + shoot(): List<BaseBullet>
+    + setShootStrategy(ShootStrategy strategy): void
+}
+
+class HeroAircraft extends AbstractAircraft {
+    + {static} INIT_X: int
+    - {static} instance: HeroAircraft
+
+    - HeroAircraft(int x, int y, int sx, int sy, int hp)
+    + {static} getInstance(): HeroAircraft
+    + reset(): void
+}
+
+HeroAircraft ..> HeroAircraft : 获取实例
+
+' ************************************
+' ** 3. 策略模式 (Strategy) **
+' ************************************
+
+interface ShootStrategy {
+    + executeShoot(AbstractAircraft aircraft, int direction, int power): List<BaseBullet>
+}
+
+class StraightShoot implements ShootStrategy
+class ScatterShoot implements ShootStrategy
+class CircularShoot implements ShootStrategy
+
+AbstractAircraft *--> ShootStrategy : 策略(组合)
+
+
+' ************************************
+' ** 4. 观察者模式 (Observer) **
+' ************************************
+
+interface BombPublisher {
+    + addSubscriber(BombSubscriber subscriber): void
+    + notifySubscribers(): int
+}
+
+interface BombSubscriber {
+    + update(): int
+}
+
+
+' ************************************
+' ** 5. 敌机具体实现 **
+' ************************************
+
+class MobEnemy extends AbstractAircraft implements BombSubscriber
+class EliteEnemy extends AbstractAircraft implements BombSubscriber
+class SuperEliteEnemy extends AbstractAircraft implements BombSubscriber
+class BossEnemy extends AbstractAircraft implements BombSubscriber
+
+' ************************************
+' ** 6. 道具与观察者实现 **
+' ************************************
+
+abstract class AbstractProp extends AbstractFlyingObject {
+    + {abstract} effect(HeroAircraft hero): void
+}
+
+class BloodProp extends AbstractProp
+class FireProp extends AbstractProp
+class BombProp extends AbstractProp implements BombPublisher
+
+BombProp o--> BombSubscriber : 维护列表(聚合)
+
+
+' ************************************
+' ** 7. 工厂模式 (Factory Method) **
+' ************************************
+
+interface AircraftFactory {
+    + createAircraft(int x, int y): AbstractAircraft
+}
+
+class MobEnemyFactory implements AircraftFactory
+class EliteEnemyFactory implements AircraftFactory
+class SuperEliteEnemyFactory implements AircraftFactory
+class BossEnemyFactory implements AircraftFactory {
+    - hp: int
+    - speedX: int
+    - shootNum: int
+    - power: int
+    + BossEnemyFactory(int hp, int speedX, int sn, int power)
+}
+
+MobEnemyFactory ..> MobEnemy : 创建
+EliteEnemyFactory ..> EliteEnemy : 创建
+SuperEliteEnemyFactory ..> SuperEliteEnemy : 创建
+BossEnemyFactory ..> BossEnemy : 创建
+
+interface PropFactory {
+    + createProp(int x, int y): AbstractProp
+}
+
+class BloodPropFactory implements PropFactory
+class FirePropFactory implements PropFactory
+class BombPropFactory implements PropFactory
+
+BloodPropFactory ..> BloodProp : 创建
+FirePropFactory ..> FireProp : 创建
+BombPropFactory ..> BombProp : 创建
+
+' ************************************
+' ** 8. 难度配置 - 模板方法模式 (Template Method) **
+' ************************************
+
+abstract class DifficultyTemplate {
+    # enemyMaxNumber: int
+    # heroHp: int
+    # bossHpIncrease: boolean
+
+    + **setupDifficulty()**: void
+    + getBossHp(int bossSpawnCount): int
+
+    # {abstract} setEnemyMaxNumber(): void
+    # {abstract} setHeroHp(): void
+    # {abstract} setEnemyHp(): void
+    - increaseEnemySpeed(Game game): void
+}
+
+class EasyDifficulty extends DifficultyTemplate
+class NormalDifficulty extends DifficultyTemplate
+class HardDifficulty extends DifficultyTemplate
+
+' ************************************
+' ** 9. 数据持久化 (DAO) **
+' ************************************
+
+class ScoreRecord {
+    - userName: String
+    - score: int
+    - recordTime: LocalDateTime
+}
+
+interface ScoreDao {
+    + getAllScores(): List<ScoreRecord>
+    + addScore(ScoreRecord record): void
+}
+
+class ScoreDaoImpl implements ScoreDao
+
+ScoreDaoImpl o--> ScoreRecord : 存储 List<ScoreRecord>
+
+' ************************************
+' ** 10. 游戏控制与调度 (Client) **
+' ************************************
+
+class RandomEnemySpawner {
+    - factoryList: List<AircraftFactory>
+    - rateList: List<Double>
+    + reconfigure(...): void
+    + spawnEnemy(): AbstractAircraft
+}
+
+RandomEnemySpawner --> AircraftFactory : 引用/选择
+
+class RandomPropSpawner {
+    - factoryList: List<PropFactory>
+    + spawnProp(x, y): AbstractProp
+}
+
+RandomPropSpawner --> PropFactory : 引用/选择
+
+class Game {
+    - heroAircraft: HeroAircraft
+    - difficultyTemplate: DifficultyTemplate
+    - enemySpawner: RandomEnemySpawner
+    - propSpawner: RandomPropSpawner
+    - scoreDao: ScoreDao
+
+    + Game(Main mainFrame, int selectedDifficulty)
+    + action(): void
+    + crashCheckAction(): void
+}
+
+Game *--> HeroAircraft : 英雄机(组合)
+Game --> DifficultyTemplate : 引用/配置
+Game --> RandomEnemySpawner : 使用
+Game --> RandomPropSpawner : 使用
+Game --> ScoreDao : 使用
+Game ..> ScoreRecord : 创建记录
+
+FireProp --> HeroAircraft : 调用 setShootStrategy()
+
+' ************************************
+' ** 11. 依赖关系调整 **
+' ************************************
+
+' Boss工厂依赖配置类来获取参数
+BossEnemyFactory ..> DifficultyTemplate : 依赖配置参数
+
+@enduml

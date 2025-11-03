@@ -79,7 +79,7 @@ public class Game extends JPanel {
     private int spawnDuration = 840;
     private int shootDuration = 520;
 
-    private int bossScoreThreshold = 200;   // Boss 出现的分数阈值
+    private int bossScoreThreshold = 100;   // Boss 出现的分数阈值
     private final int bossadd = 100;
     private int bossSpawnCount = 0;         // 记录 Boss 出现次数
 
@@ -198,7 +198,7 @@ public class Game extends JPanel {
     private void checkAndIncreaseDifficulty() {
         if (difficultyTemplate.shouldIncreaseDifficultyOverTime()) {
             // 每30秒增加一次难度
-            if (time > 0 && time % 10000 == 0) {
+            if (time > 0 && time % 30000 == 0) {
                 System.out.println("时间: " + (time / 1000) + "秒 - 难度提升！敌机速度增加！");
                 increaseAllEnemySpeed();
             }
@@ -272,6 +272,17 @@ public class Game extends JPanel {
                 return;
             }
 
+            // 安全检查：如果道具时间已过但策略未恢复，强制恢复
+            if (propEndTime > 0 && System.currentTimeMillis() > propEndTime) {
+                System.out.println("检测到道具效果超时未恢复，强制恢复直射策略");
+                heroAircraft.setShootStrategy(new StraightShoot());
+                propEndTime = 0;
+                if (firePropTimer != null && !firePropTimer.isDone()) {
+                    firePropTimer.cancel(true);
+                    firePropTimer = null;
+                }
+            }
+
             time += timeInterval;
 
             // 检查并增加难度
@@ -337,6 +348,14 @@ public class Game extends JPanel {
             // 游戏结束检查英雄机是否存活
             if (heroAircraft.getHp() <= 0) {
                 // 游戏结束
+                // 先取消所有正在运行的计时器
+                if (firePropTimer != null && !firePropTimer.isDone()) {
+                    System.out.println("游戏结束，取消道具计时器");
+                    firePropTimer.cancel(true);
+                    // 立即恢复默认射击策略
+                    heroAircraft.setShootStrategy(new StraightShoot());
+                    propEndTime = 0;
+                }
                 executorService.shutdownNow();
                 gameOverFlag = true;
 
@@ -495,6 +514,8 @@ public class Game extends JPanel {
             }
         }
 
+// 在 crashCheckAction 方法中，修改道具处理部分：
+
         // 我方获得道具，道具生效
         for (AbstractProp prop : props) {
             if (prop.notValid()) {
@@ -509,30 +530,34 @@ public class Game extends JPanel {
 
                 // 1. 取消任何现有的计时器，确保新道具覆盖旧道具
                 if (firePropTimer != null && !firePropTimer.isDone()) {
-                    firePropTimer.cancel(false);
+                    System.out.println("取消现有道具计时器");
+                    firePropTimer.cancel(true); // 使用 true 确保立即中断
                 }
 
                 // 2. 设置频率，并调度还原任务
                 if (prop instanceof FireProp || prop instanceof SuperFireProp) {
                     propEndTime = System.currentTimeMillis() + propDuration;
-                    // a. 设置新的射击频率（难度调整）
-//                    if (prop instanceof FireProp) {
-//                        this.shootDuration = 520;
-//                    } else if (prop instanceof SuperFireProp) {
-//                        this.shootDuration = 520;
-//                    }
+                    System.out.println("设置火力道具效果，持续时间: " + propDuration + "ms");
 
                     // b. 调度还原任务：【关键】同时还原策略和频率
                     Runnable revertTask = () -> {
-                        // this.shootDuration = originalShootDuration; // 还原频率 (520ms)
+                        System.out.println("道具效果结束，恢复直射策略");
                         // 还原射击策略为 StraightShoot (默认策略)
                         heroAircraft.setShootStrategy(new StraightShoot());
                         propEndTime = 0;
+                        firePropTimer = null; // 重要：清除计时器引用
                     };
 
-                    // c. 启动 8 秒计时器
-                    firePropTimer = executorService.schedule(revertTask, propDuration, TimeUnit.MILLISECONDS);
-
+                    // c. 启动计时器
+                    try {
+                        firePropTimer = executorService.schedule(revertTask, propDuration, TimeUnit.MILLISECONDS);
+                        System.out.println("道具计时器已启动");
+                    } catch (RejectedExecutionException e) {
+                        // 如果线程池已关闭，立即执行还原
+                        System.out.println("线程池已关闭，立即还原射击策略");
+                        heroAircraft.setShootStrategy(new StraightShoot());
+                        propEndTime = 0;
+                    }
                 }
                 else if (prop instanceof BombProp) {
                     // 炸弹道具：只播放音效，不影响计时器
