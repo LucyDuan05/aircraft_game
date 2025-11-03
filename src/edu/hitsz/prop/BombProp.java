@@ -1,8 +1,8 @@
 package edu.hitsz.prop;
 
 import edu.hitsz.aircraft.HeroAircraft;
-import edu.hitsz.aircraft.obserber.BombPublisher;
-import edu.hitsz.aircraft.obserber.BombSubscriber;
+import edu.hitsz.aircraft.observer.BombPublisher;
+import edu.hitsz.aircraft.observer.BombSubscriber;
 
 import java.util.ArrayList;
 import java.util.List;

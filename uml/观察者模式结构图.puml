@@ -1,27 +1,62 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-abstract class AbstractList
-abstract AbstractCollection
-interface List
-interface Collection
+class Game
+class BombProp
+class MobEnemy
+class ELiteEnemy
+class SuperEliteEnemy
+class EnemyBullet
+interface BombPublisher
+interface BombSubscriber
 
-List <|-- AbstractList
-Collection <|-- AbstractCollection
+Game ..> BombProp
+BombPublisher <|.. BombProp
 
-Collection <|- List
-AbstractCollection <|- AbstractList
-AbstractList <|-- ArrayList
+BombSubscriber <|-- MobEnemy
+BombSubscriber <|-- ELiteEnemy
+BombSubscriber <|-- SuperEliteEnemy
+BombSubscriber <|-- EnemyBullet
 
-class ArrayList {
-Object[] elementData
-size()
+BombProp o-->  BombSubscriber
+
+class Game {
+    + crashCheckAction(): void
 }
 
-enum TimeUnit {
-DAYS
-HOURS
-MINUTES
+interface BombPublisher {
+    + addSubscriber(BombSubscriber subscriber): void
+    + removeSubscriber(BombSubscriber subscriber): void
+    + notifySubscribers(): int
 }
+
+class BombProp {
+    - subscribers: List<BombSubscriber>
+    + addSubscriber(BombSubscriber subscriber): void
+    + removeSubscriber(BombSubscriber subscriber): void
+    + notifySubscribers(): int
+}
+
+
+interface BombSubscriber {
+    + update(): int
+}
+
+class EnemyBullet {
+    + update(): int
+}
+
+class MobEnemy {
+    + update(): int
+}
+
+class ELiteEnemy {
+    + update(): int
+}
+
+class SuperEliteEnemy {
+    + update(): int
+}
+
 
 @enduml

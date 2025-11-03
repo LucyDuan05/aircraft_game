@@ -1,4 +1,4 @@
-package edu.hitsz.aircraft.obserber;
+package edu.hitsz.aircraft.observer;
 /**
  * 炸弹道具的订阅者接口 (Observer)
  * 所有能被炸弹影响的对象都应实现此接口

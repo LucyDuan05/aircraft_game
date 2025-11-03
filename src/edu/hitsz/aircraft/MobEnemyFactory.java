@@ -6,6 +6,6 @@ public class MobEnemyFactory implements AircraftFactory {
         // 传入的位置参数直接用于实例化 MobEnemy
         return new MobEnemy(locationX,
                 locationY,
-                0, 10, 30);
+                0, 10, 60);
     }
 }

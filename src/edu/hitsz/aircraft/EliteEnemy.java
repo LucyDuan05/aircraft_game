@@ -1,9 +1,8 @@
 package edu.hitsz.aircraft;
 
-import edu.hitsz.aircraft.obserber.BombSubscriber;
+import edu.hitsz.aircraft.observer.BombSubscriber;
 import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.bullet.BaseBullet;
-import edu.hitsz.bullet.EnemyBullet;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +20,7 @@ public class EliteEnemy extends AbstractAircraft implements BombSubscriber {
     private int direction = 1; // 精英机子弹向下飞行
 
     // 射击和生成敌机的周期计时器
-    private int shootInterval = 600; // 射击周期，毫秒
+    private int shootInterval = 520; // 射击周期，毫秒
     // private int spawnInterval = 10000; // 生成敌机周期，毫秒
     private int shootTimer = 0;
     // private int spawnTimer = 0;

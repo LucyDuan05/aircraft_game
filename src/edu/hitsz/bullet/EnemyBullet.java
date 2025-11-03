@@ -1,6 +1,6 @@
 package edu.hitsz.bullet;
 
-import edu.hitsz.aircraft.obserber.BombSubscriber;
+import edu.hitsz.aircraft.observer.BombSubscriber;
 
 /**
  * @Author hitsz

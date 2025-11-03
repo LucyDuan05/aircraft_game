@@ -1,4 +1,4 @@
-package edu.hitsz.aircraft.obserber;
+package edu.hitsz.aircraft.observer;
 /**
  * 炸弹道具的发布者接口 (Subject)
  */

@@ -1,6 +1,6 @@
 package edu.hitsz.aircraft;
 
-import edu.hitsz.aircraft.obserber.BombSubscriber;
+import edu.hitsz.aircraft.observer.BombSubscriber;
 import edu.hitsz.application.Main;
 import edu.hitsz.bullet.BaseBullet;
 

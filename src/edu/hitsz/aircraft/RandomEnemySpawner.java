@@ -12,7 +12,7 @@ public class RandomEnemySpawner {
     private final List<AircraftFactory> factoryList;
     // 存储每个工厂对应的概率（累计概率）
     // 假设 Mob: 80%, Elite: 15%, Super:5%
-    private final List<Double> rateList = Arrays.asList(0.8, 0.95, 1.0); // 0.7为Mob的界限，1.0为Elite的界限
+    private final List<Double> rateList = Arrays.asList(0.6, 0.85, 1.0); // 0.7为Mob的界限，1.0为Elite的界限
 
     private final Random random = new Random();
 

@@ -1,13 +1,13 @@
 package edu.hitsz.application;
 
 import edu.hitsz.aircraft.*;
+import edu.hitsz.aircraft.observer.BombSubscriber;
 import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.prop.*;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import edu.hitsz.data.ScoreDao;
-import edu.hitsz.data.ScoreDaoImpl;
 import edu.hitsz.data.ScoreRecord;
 
 import javax.swing.*;
@@ -57,7 +57,7 @@ public class Game extends JPanel {
     /**
      * 屏幕中出现的敌机最大数量
      */
-    private int enemyMaxNumber = 5;
+    private int enemyMaxNumber = 10;
 
     /**
      * 当前得分
@@ -73,7 +73,7 @@ public class Game extends JPanel {
      * 周期（ms)
      * 指示子弹的发射、敌机的产生频率
      */
-    private int spawnDuration = 1040;
+    private int spawnDuration = 840;
     private int shootDuration = 520;
     private int cycleTime = 0;
 
@@ -380,7 +380,7 @@ public class Game extends JPanel {
                     firePropTimer.cancel(false);
                 }
 
-                // 2. 【新增/修复】设置频率，并调度还原任务
+                // 2. 设置频率，并调度还原任务
                 if (prop instanceof FireProp || prop instanceof SuperFireProp) {
                     propEndTime = System.currentTimeMillis() + propDuration;
                     // a. 设置新的射击频率（难度调整）
@@ -406,8 +406,27 @@ public class Game extends JPanel {
                     // 炸弹道具：只播放音效，不影响计时器
                     // mainFrame.getSoundManager().playSound(SoundManager.BOMB_PATH);
                     soundManager.playSound(SoundManager.BOMB_PATH);
-                }
+                    // 炸弹道具生效逻辑 (观察者模式)
+                    // 1. 注册所有观察者 (敌机和敌机子弹)
+                    BombProp bomb = (BombProp) prop;
 
+                    // 遍历所有敌机和敌机子弹进行注册
+                    // 注意：BossEnemy 不实现 BombSubscriber，因此不会被注册
+                    for (AbstractAircraft enemy : enemyAircrafts) {
+                        if (enemy instanceof BombSubscriber) {
+                            bomb.addSubscriber((BombSubscriber) enemy);
+                        }
+                    }
+                    for (BaseBullet bullet : enemyBullets) {
+                        if (bullet instanceof BombSubscriber) {
+                            // 假设 BaseBullet/EnemyBullet 实现了 BombSubscriber
+                            bomb.addSubscriber((BombSubscriber) bullet);
+                        }
+                    }
+
+                    // 2. 通知所有观察者，并累加分数
+                    score += bomb.notifySubscribers(); // BombProp 有 notifySubscribers 方法
+                }
                 prop.vanish(); // 道具使用后必须消失
             }
         }

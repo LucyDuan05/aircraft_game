@@ -1,9 +1,8 @@
 package edu.hitsz.aircraft;
 
-import edu.hitsz.aircraft.obserber.BombSubscriber;
-import edu.hitsz.aircraft.shoot.StraightShoot;
+import edu.hitsz.aircraft.observer.BombSubscriber;
+import edu.hitsz.aircraft.shoot.ScatterShoot;
 import edu.hitsz.bullet.BaseBullet;
-import edu.hitsz.bullet.EnemyBullet;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -12,13 +11,13 @@ public class SuperEliteEnemy extends AbstractAircraft implements BombSubscriber 
     // private int shootNum = 3;
     private int power = 10;
     private int direction = 1;
-    private int shootInterval = 1000;
+    private int shootInterval = 840;
     private int shootTimer = 0;
 
     public SuperEliteEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
         // 设置 SuperEliteEnemy 的策略：散射
-        this.shootStrategy = new StraightShoot();
+        this.shootStrategy = new ScatterShoot();
         this.shootDirection = this.direction;
     }
 
@@ -44,8 +43,8 @@ public class SuperEliteEnemy extends AbstractAircraft implements BombSubscriber 
 
     @Override
     public int update() {
-        // 超级精英敌机血量减少 10
-        this.decreaseHp(60);
+        // 超级精英敌机血量减少 30
+        this.decreaseHp(30);
         // 返回清除精英敌机的分数 (假设 10 分)
         return 0;
     }
