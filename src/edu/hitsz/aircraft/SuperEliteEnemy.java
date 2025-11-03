@@ -1,5 +1,6 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.aircraft.obserber.BombSubscriber;
 import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.bullet.EnemyBullet;
@@ -7,7 +8,7 @@ import edu.hitsz.bullet.EnemyBullet;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SuperEliteEnemy extends AbstractAircraft{
+public class SuperEliteEnemy extends AbstractAircraft implements BombSubscriber {
     // private int shootNum = 3;
     private int power = 10;
     private int direction = 1;
@@ -39,5 +40,13 @@ public class SuperEliteEnemy extends AbstractAircraft{
             res.addAll(this.shootStrategy.executeShoot(this, this.shootDirection, this.power));
         }
         return res;
+    }
+
+    @Override
+    public int update() {
+        // 超级精英敌机血量减少 10
+        this.decreaseHp(60);
+        // 返回清除精英敌机的分数 (假设 10 分)
+        return 0;
     }
 }

@@ -405,7 +405,7 @@ public class Game extends JPanel {
                 else if (prop instanceof BombProp) {
                     // 炸弹道具：只播放音效，不影响计时器
                     // mainFrame.getSoundManager().playSound(SoundManager.BOMB_PATH);
-                    soundManager.playSound(SoundManager.PROP_PATH);
+                    soundManager.playSound(SoundManager.BOMB_PATH);
                 }
 
                 prop.vanish(); // 道具使用后必须消失

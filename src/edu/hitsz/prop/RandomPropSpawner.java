@@ -21,7 +21,7 @@ public class RandomPropSpawner {
         );
     }
 
-    private final List<Double> rateList = Arrays.asList(0.25, 0.6, 0.95, 1.0);
+    private final List<Double> rateList = Arrays.asList(0.25, 0.6, 0.7, 1.0);
 
     /**
      * 随机选择一个道具工厂来创建道具（假设等概率）

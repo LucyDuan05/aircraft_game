@@ -1,5 +1,6 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.aircraft.obserber.BombSubscriber;
 import edu.hitsz.aircraft.shoot.StraightShoot;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.bullet.EnemyBullet;
@@ -13,7 +14,7 @@ import java.util.Random;
  * 拥有射击能力，能周期性产生敌机，坠毁后能掉落道具
  * @author hitsz
  */
-public class EliteEnemy extends AbstractAircraft {
+public class EliteEnemy extends AbstractAircraft implements BombSubscriber {
 
 //    private int shootNum = 1;
     private int power = 10;
@@ -51,5 +52,13 @@ public class EliteEnemy extends AbstractAircraft {
             res.addAll(this.shootStrategy.executeShoot(this, this.shootDirection, this.power));
         }
         return res;
+    }
+
+    @Override
+    public int update() {
+        // 精英敌机被清除
+        this.vanish();
+        // 返回清除精英敌机的分数 (假设 10 分)
+        return 10;
     }
 }
