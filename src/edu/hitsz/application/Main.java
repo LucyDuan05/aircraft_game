@@ -66,6 +66,22 @@ public class Main extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * 获取当前游戏实例
+     * @return 当前游戏实例，如果游戏未启动则返回null
+     */
+    public Game getGame() {
+        return gamePanel;
+    }
+
+    /**
+     * 获取当前游戏是否正在运行
+     * @return true如果游戏正在运行，否则false
+     */
+    public boolean isGameRunning() {
+        return gamePanel != null && !gamePanel.isGameOver();
+    }
+
     // 设置难度和音效的方法，供 MenuPanel 调用
     public void setGameConfig(int difficulty, boolean soundOn) {
         this.selectedDifficulty = difficulty;

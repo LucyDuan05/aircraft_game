@@ -53,6 +53,9 @@ public abstract class AbstractAircraft extends AbstractFlyingObject {
     // 英雄机和敌机有不同的 power 和 direction，具体在子类中初始化
     public abstract List<BaseBullet> shoot();
 
+    public void increaseSpeed(int increment) {
+        this.speedY += increment;
+    }
 }
 
 

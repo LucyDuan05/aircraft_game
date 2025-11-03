@@ -1,9 +1,19 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.application.Game;
+import edu.hitsz.application.Main;
+
 public class BossEnemyFactory implements AircraftFactory {
+    private final Game game;
+
+    public BossEnemyFactory(Game game) {
+        this.game = game;
+    }
+
     @Override
     public AbstractAircraft createAircraft(int locationX, int locationY) {
-        // BossEnemy: HP=510 (高血量), SpeedX=2 (左右悬浮移动), SpeedY=0
-        return new BossEnemy(locationX, locationY, 2, 0, 270);
+        int bossSpawnCount = game.getBossSpawnCount();
+        int hp = game.getBossEnemyHp(bossSpawnCount);
+        return new BossEnemy(locationX, locationY, 2, 0, hp);
     }
 }

@@ -3,6 +3,10 @@ package edu.hitsz.application;
 import edu.hitsz.aircraft.*;
 import edu.hitsz.aircraft.observer.BombSubscriber;
 import edu.hitsz.aircraft.shoot.StraightShoot;
+import edu.hitsz.application.difficulty.DifficultyTemplate;
+import edu.hitsz.application.difficulty.EasyDifficulty;
+import edu.hitsz.application.difficulty.HardDifficulty;
+import edu.hitsz.application.difficulty.NormalDifficulty;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.prop.*;
@@ -27,7 +31,6 @@ import java.time.LocalDateTime;
 public class Game extends JPanel {
 
     private int backGroundTop = 0;
-    private String TestPlayer = "player";
     /**
      * Scheduled 线程池，用于任务调度
      */
@@ -39,10 +42,10 @@ public class Game extends JPanel {
     private int timeInterval = 40;
 
     // 工厂模式实例
-    private final RandomEnemySpawner aircraftSpawner = new RandomEnemySpawner();
+    private RandomEnemySpawner aircraftSpawner;
     private final RandomPropSpawner propSpawner = new RandomPropSpawner();
 
-    private final BossEnemyFactory bossFactory = new BossEnemyFactory();
+    private BossEnemyFactory bossFactory;
 
     // 单例模式实例
     private final HeroAircraft heroAircraft;
@@ -75,10 +78,9 @@ public class Game extends JPanel {
      */
     private int spawnDuration = 840;
     private int shootDuration = 520;
-    private int cycleTime = 0;
 
-    private int bossScoreThreshold = 300;   // Boss 出现的分数阈值
-    private final int bossadd = 200;
+    private int bossScoreThreshold = 200;   // Boss 出现的分数阈值
+    private final int bossadd = 100;
     private int bossSpawnCount = 0;         // 记录 Boss 出现次数
 
     private final Random random = new Random();
@@ -95,13 +97,15 @@ public class Game extends JPanel {
     private Main mainFrame;
     private SoundManager soundManager;
     private int difficulty;
+    // private int difficultyLevel = 0;
+    private int enemySpeedIncrement = 0; // 记录敌机速度的总增量
 
-    private final int propDuration = 3000; // 道具效果持续时间，例如 8 秒 (8000ms)
+    private int propDuration = 3000; // 道具效果持续时间，例如 8 秒 (8000ms)
     private ScheduledFuture<?> firePropTimer; // 用于追踪当前道具计时器的 Future
-    private final int originalShootDuration = 520; // 记录英雄机默认射击间隔 (从您的初始化值获取)
 
     // 修复：添加 volatile 保证多线程可见性
     private volatile long propEndTime = 0;
+    private DifficultyTemplate difficultyTemplate;
 
     // 构造函数接受 MainFrame 引用
     public Game(Main mainFrame, int difficulty) {
@@ -109,7 +113,35 @@ public class Game extends JPanel {
         this.difficulty = difficulty;
         this.soundManager = mainFrame.getSoundManager(); // 获取 SoundManager
         this.scoreDao = mainFrame.getScoreDao();         // 从 MainFrame 获取 DAO
+        // 单例模式 & 无参数方法
+        this.heroAircraft = HeroAircraft.getInstance();
+        this.heroAircraft.reset();
 
+        // 根据难度选择模板
+        switch (difficulty) {
+            case 1:
+                this.difficultyTemplate = new EasyDifficulty();
+                break;
+            case 2:
+                this.difficultyTemplate = new NormalDifficulty();
+                break;
+            case 3:
+                this.difficultyTemplate = new HardDifficulty();
+                break;
+            default:
+                this.difficultyTemplate = new NormalDifficulty();
+        }
+        // 应用难度设置
+        difficultyTemplate.setupDifficulty();
+        applyDifficultySettings();
+        this.aircraftSpawner = new RandomEnemySpawner(
+                difficultyTemplate.getMobEnemyHp(),
+                difficultyTemplate.getEliteEnemyHp(),
+                difficultyTemplate.getSuperEliteEnemyHp(),
+                this
+        );
+        // 初始化Boss工厂，传入当前Game实例
+        this.bossFactory = new BossEnemyFactory(this);
         // 初始化列表成员变量
         // 修复：使用 CopyOnWriteArrayList 替代 LinkedList，防止并发修改异常
         this.enemyAircrafts = new CopyOnWriteArrayList<>();
@@ -117,9 +149,7 @@ public class Game extends JPanel {
         this.enemyBullets = new CopyOnWriteArrayList<>();
         this.props = new CopyOnWriteArrayList<>();
 
-        // 单例模式 & 无参数方法
-        this.heroAircraft = HeroAircraft.getInstance();
-        this.heroAircraft.reset();
+
         /**
          * Scheduled 线程池，用于定时任务调度...
          */
@@ -129,6 +159,102 @@ public class Game extends JPanel {
         //启动英雄机鼠标监听
         new HeroController(this, heroAircraft);
 
+    }
+
+    /**
+     * 应用难度设置到游戏参数
+     */
+    private void applyDifficultySettings() {
+        this.enemyMaxNumber = difficultyTemplate.getEnemyMaxNumber();
+        this.shootDuration = difficultyTemplate.getShootDuration();
+        this.propDuration = difficultyTemplate.getPropDuration();
+
+        // 设置英雄机生命值
+        this.heroAircraft.setHp(difficultyTemplate.getHeroHp());
+    }
+
+    /**
+     * 获取敌机生命值（根据难度）
+     */
+//    public int getMobEnemyHp() {
+//        return difficultyTemplate.getMobEnemyHp();
+//    }
+//
+//    public int getEliteEnemyHp() {
+//        return difficultyTemplate.getEliteEnemyHp();
+//    }
+//
+//    public int getSuperEliteEnemyHp() {
+//        return difficultyTemplate.getSuperEliteEnemyHp();
+//    }
+
+    public int getBossEnemyHp(int bossSpawnCount) {
+        return difficultyTemplate.getBossHp(bossSpawnCount);
+    }
+
+    /**
+     * 随时间增加难度
+     */
+    private void checkAndIncreaseDifficulty() {
+        if (difficultyTemplate.shouldIncreaseDifficultyOverTime()) {
+            // 每30秒增加一次难度
+            if (time > 0 && time % 10000 == 0) {
+                System.out.println("时间: " + (time / 1000) + "秒 - 难度提升！敌机速度增加！");
+                increaseAllEnemySpeed();
+            }
+        }
+    }
+
+    /**
+     * 获取当前敌机速度增量
+     */
+    public int getEnemySpeedIncrement() {
+        return enemySpeedIncrement;
+    }
+
+    /**
+     * 增加所有敌机速度（用于动态难度）
+     */
+    public void increaseAllEnemySpeed() {
+        int mobCount = 0;
+        int eliteCount = 0;
+        int superEliteCount = 0;
+
+        System.out.println("=== 难度提升！敌机速度增加详情 ===");
+
+        for (AbstractAircraft enemy : enemyAircrafts) {
+            String enemyType = enemy.getClass().getSimpleName();
+            int oldSpeedY = enemy.getSpeedY();
+
+            if (enemy instanceof MobEnemy) {
+                enemy.increaseSpeed(1);
+                mobCount++;
+                System.out.println("Mob敌机 [位置: (" + enemy.getLocationX() + "," + enemy.getLocationY() +
+                        ")] 速度从 " + oldSpeedY + " 增加到 " + enemy.getSpeedY());
+            } else if (enemy instanceof EliteEnemy) {
+                enemy.increaseSpeed(1);
+                eliteCount++;
+                System.out.println("Elite敌机 [位置: (" + enemy.getLocationX() + "," + enemy.getLocationY() +
+                        ")] 速度从 " + oldSpeedY + " 增加到 " + enemy.getSpeedY());
+            } else if (enemy instanceof SuperEliteEnemy) {
+                enemy.increaseSpeed(1);
+                superEliteCount++;
+                System.out.println("SuperElite敌机 [位置: (" + enemy.getLocationX() + "," + enemy.getLocationY() +
+                        ")] 速度从 " + oldSpeedY + " 增加到 " + enemy.getSpeedY());
+            }
+        }
+
+        // 增加全局速度增量
+        enemySpeedIncrement++;
+        System.out.println("全局敌机速度增量已增加到: " + enemySpeedIncrement);
+
+        // 总结性输出
+        System.out.println("=== 敌机速度增加统计 ===");
+        if (mobCount > 0) System.out.println("Mob敌机: " + mobCount + " 架，速度增加 1");
+        if (eliteCount > 0) System.out.println("Elite敌机: " + eliteCount + " 架，速度增加 1");
+        if (superEliteCount > 0) System.out.println("SuperElite敌机: " + superEliteCount + " 架，速度增加 1");
+        System.out.println("新产生的敌机也将使用增加后的速度");
+        System.out.println("=========================");
     }
 
     /**
@@ -148,6 +274,9 @@ public class Game extends JPanel {
 
             time += timeInterval;
 
+            // 检查并增加难度
+            checkAndIncreaseDifficulty();
+
             // 1. 射击周期判断
             if (time % shootDuration == 0) { // 使用模运算判断是否到达射击周期
                 // 飞机射出子弹
@@ -165,21 +294,24 @@ public class Game extends JPanel {
 
                 // Boss 出现逻辑
                 boolean hasBoss = enemyAircrafts.stream().anyMatch(e -> e instanceof BossEnemy);
-                if (!hasBoss && score >= bossScoreThreshold) { // 分数达到设定阈值
+                if (!hasBoss && score >= bossScoreThreshold && difficulty > 1) { // 分数达到设定阈值
                     // 没有Boss 且达到下一次Boss阈值，则生成Boss
                     bossSpawnCount++;
                     // Boss 总是从屏幕中央顶部生成
                     int bossX = Main.WINDOW_WIDTH / 2;
 
                     int bossY = ImageManager.BOSS_ENEMY_IMAGE.getHeight() / 2;
-                    enemyAircrafts.add(bossFactory.createAircraft(bossX, bossY));
+                    // 计算Boss生命值
+                    int bossHp = getBossEnemyHp(bossSpawnCount);
+                    BossEnemy boss = new BossEnemy(bossX, bossY, 2, 0, bossHp);
+                    enemyAircrafts.add(boss);
 
-                    // **音效：Boss 出场**
+                    // 输出Boss信息到终端
+                    System.out.println("Boss出现！第 " + bossSpawnCount + " 次出现，生命值: " + bossHp);
+
                     soundManager.stopBgm();
                     soundManager.playBossBgm();
-
-                    // 阈值增加，使下一次Boss出现更难
-                    bossScoreThreshold += bossadd; // 调整下一次阈值
+                    bossScoreThreshold += bossadd;
                 }
 
             }
@@ -446,6 +578,10 @@ public class Game extends JPanel {
         props.removeIf(AbstractFlyingObject::notValid); // <-- 清理无效道具
     }
 
+    public boolean isGameOver() {
+        return gameOverFlag;
+    }
+
 
     //***********************
     //      Paint 各部分
@@ -520,22 +656,85 @@ public class Game extends JPanel {
         int y = 25;
         g.setColor(new Color(16711680));
         g.setFont(new Font("SansSerif", Font.BOLD, 22));
-        // 修复：读取 volatile 的 score 是安全的
         g.drawString("SCORE:" + this.score, x, y);
         y = y + 20;
         g.drawString("LIFE:" + this.heroAircraft.getHp(), x, y);
 
-        // 修复：读取 volatile 的 propEndTime 是安全的
-        if (propEndTime > 0) {
-            // 计算剩余毫秒数
-            long timeLeftMs = propEndTime - System.currentTimeMillis();
-            // 转换为秒，保留一位小数
-            double timeLeftSec = Math.max(0, timeLeftMs / 1000.0);
-
-            // 在屏幕上绘制
+        // 检查是否有Boss敌机并显示其生命值
+        BossEnemy boss = findBossEnemy();
+        if (boss != null) {
             y = y + 20;
-            g.setColor(new Color(65535)); // 蓝色
+            g.setColor(new Color(255, 0, 0)); // 红色显示Boss生命值
+            g.drawString("BOSS HP:" + boss.getHp(), x, y);
+
+            // 可选：绘制Boss血条
+            drawBossHealthBar(g, boss);
+        }
+
+        // 原有的道具时间显示
+        if (propEndTime > 0) {
+            long timeLeftMs = propEndTime - System.currentTimeMillis();
+            double timeLeftSec = Math.max(0, timeLeftMs / 1000.0);
+            y = y + 20;
+            g.setColor(new Color(65535));
             g.drawString(String.format("FIRE TIME: %.1f s", timeLeftSec), x, y);
         }
     }
+
+    /**
+     * 查找当前的Boss敌机
+     */
+    private BossEnemy findBossEnemy() {
+        for (AbstractAircraft enemy : enemyAircrafts) {
+            if (enemy instanceof BossEnemy) {
+                return (BossEnemy) enemy;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 绘制Boss血条（可选功能）
+     */
+    private void drawBossHealthBar(Graphics g, BossEnemy boss) {
+        int barWidth = 200;
+        int barHeight = 15;
+        int x = (Main.WINDOW_WIDTH - barWidth) / 2;
+        int y = 60;
+
+        // 绘制背景
+        g.setColor(Color.GRAY);
+        g.fillRect(x, y, barWidth, barHeight);
+
+        // 绘制血条
+        float healthPercent = (float) boss.getHp() / boss.getMaxHp();
+        int healthWidth = (int) (barWidth * healthPercent);
+
+        // 根据血量改变颜色
+        if (healthPercent > 0.6) {
+            g.setColor(Color.GREEN);
+        } else if (healthPercent > 0.3) {
+            g.setColor(Color.YELLOW);
+        } else {
+            g.setColor(Color.RED);
+        }
+
+        g.fillRect(x, y, healthWidth, barHeight);
+
+        // 绘制边框
+        g.setColor(Color.WHITE);
+        g.drawRect(x, y, barWidth, barHeight);
+
+        // 绘制血量文本
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("SansSerif", Font.BOLD, 12));
+        String healthText = boss.getHp() + " / " + boss.getMaxHp();
+        int textWidth = g.getFontMetrics().stringWidth(healthText);
+        g.drawString(healthText, x + (barWidth - textWidth) / 2, y + barHeight - 2);
+    }
+
+    public int getBossSpawnCount() {
+        return bossSpawnCount;
+    }
+
 }

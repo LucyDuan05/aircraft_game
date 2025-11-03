@@ -1,5 +1,6 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.application.Game;
 import edu.hitsz.application.ImageManager;
 import edu.hitsz.application.Main;
 import java.util.Arrays;
@@ -15,13 +16,15 @@ public class RandomEnemySpawner {
     private final List<Double> rateList = Arrays.asList(0.6, 0.85, 1.0); // 0.7为Mob的界限，1.0为Elite的界限
 
     private final Random random = new Random();
+    private final Game game;
 
-    public RandomEnemySpawner() {
-        // 初始化时，注册所有具体工厂实例
+    public RandomEnemySpawner(int mobHp, int eliteHp, int superEliteHp, Game game) {
+        this.game = game;
+        // 初始化工厂，传入对应的生命值和Game引用
         this.factoryList = Arrays.asList(
-                new MobEnemyFactory(),  // 索引 0
-                new EliteEnemyFactory(),// 索引 1
-                new SuperEliteEnemyFactory() // 索引2
+                new MobEnemyFactory(mobHp, game),
+                new EliteEnemyFactory(eliteHp, game),
+                new SuperEliteEnemyFactory(superEliteHp, game)
         );
     }
 

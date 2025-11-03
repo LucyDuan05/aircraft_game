@@ -15,12 +15,20 @@ public class BossEnemy extends AbstractAircraft{
     private int shootInterval = 4000;
     private int shootTimer = 0;
     private int bulletSpeed = 10;
+    private int maxHp; // 最大生命值
 
     public BossEnemy(int locationX, int locationY, int speedX, int speedY, int hp) {
         super(locationX, locationY, speedX, speedY, hp);
-        // 设置 BossEnemy 的策略：直射
+        this.maxHp = hp; // 记录最大生命值
         this.shootStrategy = new CircularShoot();
         this.shootDirection = 1;
+    }
+
+    /**
+     * 获取最大生命值
+     */
+    public int getMaxHp() {
+        return maxHp;
     }
 
     @Override

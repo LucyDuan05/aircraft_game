@@ -1,9 +1,20 @@
 package edu.hitsz.aircraft;
 
+import edu.hitsz.application.Game;
+
 public class SuperEliteEnemyFactory implements AircraftFactory{
+    private final int hp;
+    private final Game game;
+
+    public SuperEliteEnemyFactory(int hp, Game game) {
+        this.hp = hp;
+        this.game = game;
+    }
+
     @Override
     public AbstractAircraft createAircraft(int locationX, int locationY) {
-        // SuperEliteEnemy: HP=100, SpeedX=4 (左右移动), SpeedY=6 (向下)
-        return new SuperEliteEnemy(locationX, locationY, 4, 6, 90);
+        int baseSpeed = 5; // 基础速度
+        int speedIncrement = game != null ? game.getEnemySpeedIncrement() : 0;
+        return new SuperEliteEnemy(locationX, locationY, 0, baseSpeed + speedIncrement, hp);
     }
 }

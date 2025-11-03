@@ -103,4 +103,8 @@ public class HeroAircraft extends AbstractAircraft {
         // 4. 重置有效性 (如果您有 valid 字段或 vanish() 方法)
         // this.valid = true; // (如果需要)
     }
+
+    public void setHp(int hp) {
+        this.hp = hp;
+    }
 }
